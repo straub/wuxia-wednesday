@@ -15,7 +15,7 @@
       <OField label="Find a movie" label-size="large">
         <OAutocomplete
           :data="data"
-          placeholder="e.g. Werewolf Game: Inferno"
+          placeholder="e.g. The Werewolf Game: Inferno"
           field="title"
           size="large"
           :loading="isFetching"
@@ -51,7 +51,7 @@
                 <br />
                 <small>
                   ({{ props.option.release_date.split('-')[0] }})
-                  {{ props.option.vote_count > 0 ? Math.round(props.option.vote_average*100/10) : '' }}%
+                  {{ props.option.vote_count > 10 ? Math.round(props.option.vote_average*100/10) : '' }}%
                 </small>
               </div>
             </div>
@@ -82,6 +82,7 @@
         </a>
       </div>
     </div>
+    <OLoading full-page v-model:active="isLoading"></OLoading>
   </div>
 </template>
 
@@ -93,10 +94,11 @@ import cola from 'cytoscape-cola'
 import layoutUtilities from 'cytoscape-layout-utilities';
 import { MovieDb } from 'moviedb-promise'
 
-import { OModal, OField, OAutocomplete } from '@oruga-ui/oruga-next'
-import '@oruga-ui/oruga-next/dist/oruga.css'
+import { OModal, OField, OAutocomplete, OLoading } from '@oruga-ui/oruga-next'
 
 const moviedb = new MovieDb('b95ecffb4e929829fbc815288785b66e')
+
+const isLoading = ref(true)
 
 const isSearching = ref(false);
 
@@ -196,6 +198,8 @@ const mostPopular = await fetchMovie(mostPopularId)
 
 console.log({ mostPopular });
 
+isLoading.value = false
+
 onMounted(() => {
 
   const config = {
@@ -232,7 +236,7 @@ onMounted(() => {
             `${ele.data('title')}\n` :
             ''
           }(${ele.data('release_date').split('-')[0]}) ${
-            ele.data('vote_count') > 0 ? `${
+            ele.data('vote_count') > 10 ? `${
               Math.round(ele.data('vote_average')*100/10)
             }% `: ''
           }${
@@ -356,7 +360,7 @@ onMounted(() => {
             id: `movie:${movie.id}-person:${credit.id}`,
             source: `movie:${movie.id}`,
             target: `person:${credit.id}`,
-            billing: `#${credit.order + 1}`,
+            billing: !isNaN(credit.order) ? `#${credit.order + 1}` : credit.job,
           }
         },
     ]))
@@ -400,7 +404,7 @@ onMounted(() => {
             id: `movie:${credit.id}-person:${person.id}`,
             source: `movie:${credit.id}`,
             target: `person:${person.id}`,
-            billing: `#${credit.order + 1}`,
+            billing: !isNaN(credit.order) ? `#${credit.order + 1}` : credit.job,
           }
         },
         {
@@ -437,13 +441,20 @@ onMounted(() => {
     const id = node.id()
     console.log( 'onetapped ' + id );
 
-    if (id.startsWith('movie:')) {
-      const movie = await fetchMovie(id)
-      expandMovie(movie)
+    try {
+      isLoading.value = true
+
+      if (id.startsWith('movie:')) {
+        const movie = await fetchMovie(id)
+        expandMovie(movie)
+      }
+      else if (id.startsWith('person:')) {
+        const person = await fetchPerson(id)
+        expandPerson(person)
+      }
     }
-    else if (id.startsWith('person:')) {
-      const person = await fetchPerson(id)
-      expandPerson(person)
+    finally {
+      isLoading.value = false
     }
   })
   .on('dbltap', 'node', async (evt) => {
@@ -463,6 +474,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss">
+@import '@oruga-ui/oruga-next/dist/oruga-full.css';
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400&display=swap');
 
 html,
@@ -486,6 +498,10 @@ body {
   overflow: visible;
 }
 
+.o-field__label {
+  color: #fff;
+}
+
 .o-input {
   width: 50vw;
   line-height: 2rem;
@@ -494,6 +510,16 @@ body {
 
 .o-acp__menu {
   background-color: #000;
+}
+
+.o-acp__item {
+  background-color: #000;
+  color: #fff;
+}
+
+.o-acp__item--hover, .o-acp__item:hover {
+  background-color: #333;
+  color: #fff;
 }
 
 .media {
@@ -546,6 +572,10 @@ h1 {
 #attribution {
   display: inline-block;
   padding-left: 1rem;
+}
+
+.o-load__overlay {
+  background: rgba(0, 0, 0, 0.3);
 }
 
 /* Glitch Animation - https://codepen.io/lbebber/pen/nqwBKK */
