@@ -1,72 +1,28 @@
 <template>
   <div
     id="container"
-    @mousedown="animateH1"
-    @touchend="animateH1"
+    @mousedown="() => isGlitching = true"
+    @touchend="() => isGlitching = true"
   >
     <div
       id="cy"
       :style="{ cursor }"
-    >
-    </div>
-    <OModal
-      v-model:active="isSearching"
-    >
-      <OField label="Find a movie" label-size="large">
-        <OAutocomplete
-          :data="data"
-          placeholder="e.g. The Werewolf Game: Inferno"
-          field="title"
-          size="large"
-          :loading="isFetching"
-          check-infinite-scroll
-          keep-first
-          :debounce-typing="500"
-          ref="input"
-          @typing="getAsyncData"
-          @select="(option) => {
-            if (!option) return;
-            cy.nodes().remove()
-            const ele = cy.add([{
-              data: { ...option, id: `movie:${option.id}` },
-              classes: ['movie', 'foreground'],
-              pannable: true,
-            }])
-            cy.fit(ele, padding)
-            isSearching = false
-          }"
-          @infinite-scroll="getMoreAsyncData"
-        >
-          <template #default="props">
-            <div class="media">
-              <div class="media-left">
-                <img
-                  width="32"
-                  crossorigin="anonymous"
-                  :src="`https://image.tmdb.org/t/p/w342${props.option.poster_path}`"
-                />
-              </div>
-              <div class="media-content">
-                {{ props.option.title }}
-                <br />
-                <small>
-                  ({{ props.option.release_date.split('-')[0] }})
-                  {{ props.option.vote_count > 10 ? Math.round(props.option.vote_average*100/10) : '' }}%
-                </small>
-              </div>
-            </div>
-          </template>
-          <template #footer v-if="page > totalPages">
-            <span class="ex-text-grey">
-              Thats it! No more movies found.
-            </span>
-          </template>
-        </OAutocomplete>
-      </OField>
-    </OModal>
-    <h1 :class="{ glitch: isH1Animating }"  data-text="Wuxia Wednesday">
-      Wuxia Wednesday
-    </h1>
+    ></div>
+    <TheMovieSearchModal
+      v-model:is-searching="isSearching"
+      @select="movie => {
+        if (!movie) return;
+        cy.nodes().remove()
+        const ele = cy.add([{
+          data: { ...movie, id: `movie:${movie.id}` },
+          classes: ['movie', 'foreground'],
+          pannable: true,
+        }])
+        cy.fit(ele, padding)
+        isSearching = false
+      }"
+    ></TheMovieSearchModal>
+    <TheLogo v-model:is-glitching="isGlitching"></TheLogo>
     <div id="toolbar">
       <button @click="cy.fit(undefined, padding)">Fit</button>
       <button @click="cy.fit(cy.$('node.foreground'), padding)">Focus</button>
@@ -87,90 +43,27 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick, onMounted } from 'vue'
 import cytoscape from 'cytoscape'
 import fcose from 'cytoscape-fcose'
 import cola from 'cytoscape-cola'
 import layoutUtilities from 'cytoscape-layout-utilities';
 import { MovieDb } from 'moviedb-promise'
-
-import { OModal, OField, OAutocomplete, OLoading } from '@oruga-ui/oruga-next'
-
-const moviedb = new MovieDb('b95ecffb4e929829fbc815288785b66e')
-
-const isLoading = ref(true)
-
-const isSearching = ref(false);
-
-const input = ref(null)
-
-watch(isSearching, () => nextTick(() => input.value?.focus()))
-
-const isFetching = ref(false);
-const page = ref(1);
-const totalPages = ref(1);
-
-const data = ref([]);
-const selected = ref(null);
-const name = ref('');
-
-async function getAsyncData(_name) {
-  if (name.value !== _name) {
-    name.value = _name;
-    data.value = [];
-    page.value = 1;
-    totalPages.value = 1;
-  }
-
-  // String cleared
-  if (!_name.length) {
-    data.value = [];
-    page.value = 1;
-    totalPages.value = 1;
-
-    return;
-  }
-
-  // Reached last page
-  if (page.value > totalPages.value) {
-    return;
-  }
-
-  isFetching.value = true;
-  try {
-    const _data = await moviedb.searchMovie({
-      query: _name,
-      page: page.value,
-    })
-
-    data.value = [...data.value, ..._data.results];
-    page.value += 1;
-    totalPages.value = _data.total_pages;
-  } catch(error) {
-    throw error;
-  } finally {
-    isFetching.value = false;
-  }
-}
-
-function getMoreAsyncData() {
-  getAsyncData(name.value);
-}
+import { OLoading } from '@oruga-ui/oruga-next'
 
 cytoscape.use(fcose)
 cytoscape.use(cola)
 cytoscape.use(layoutUtilities)
 
+/** @type {cytoscape.Core} */
 let cy
 
-let isH1Animating = ref(false)
-const animateH1 = () => {
-  console.log('animating h1')
-  isH1Animating.value = true
-  setTimeout(() => isH1Animating.value = false, 1000 + 2000 * Math.random())
-}
+const moviedb = new MovieDb('b95ecffb4e929829fbc815288785b66e')
 
-let cursor = ref('inherit')
+const isLoading = ref(true)
+const isSearching = ref(false);
+const isGlitching = ref(false)
+
+const cursor = ref('inherit')
 
 const padding = 30
 
@@ -254,23 +147,11 @@ onMounted(() => {
         selector: 'node.person',
         style: {
           label: 'data(name)',
-          // label: ele => `${ele.data('name')} (${ele.data('movie_credits').length})`,
           width: 45,
           height: 45,
           'z-index': 2,
           shape: 'ellipse',
           'background-image': ele => 'https://image.tmdb.org/t/p/w185' + ele.data('profile_path'),
-        }
-      },
-      {
-        selector: 'node.rating',
-        style: {
-          label: 'data(text)',
-          width: 30,
-          height: 30,
-          shape: 'round-rectangle',
-          'text-valign': 'center',
-          'display': 'none',
         }
       },
       {
@@ -319,7 +200,11 @@ onMounted(() => {
 
   const layoutUtil = cy.layoutUtilities()
 
-  const runLayout = (fixedNodeConstraint, cb) => cy.layout({
+  /**
+   * @param {cytoscape.NodeSingular} ele
+   * @param {function} cb
+   */
+  const runLayout = (ele, cb) => cy.layout({
     name: 'fcose',
     nodeDimensionsIncludeLabels: true,
     fit: false,
@@ -328,109 +213,68 @@ onMounted(() => {
     // edgeElasticity: edge => 0.3,
     // nodeRepulsion: node => 10000,
     padding,
-    fixedNodeConstraint,
+    fixedNodeConstraint: ele ? [{ nodeId: ele.id(), position: ele.position() }] : [],
     stop: cb,
   })
   .run()
-  
-  console.log({ cy })
 
-  function expandMovie (movie) {
-    const ele = cy.getElementById(`movie:${movie.id}`)
-    ele.data(movie);
-    console.log({ movie, ele })
+  /**
+   * @param {string} id
+   * @param {Object} [newData]
+   */
+  function expandNode (id, newData = {}) {
+    const type = id.split(':')[0]
+    const otherType = type === 'movie' ? 'person' : 'movie'
+    const ele = cy.getElementById(id)
+    ele.data(newData);
+    console.log({ id, type, newData, ele })
+
     const currentPage = ele.data('currentPage') ?? 0;
     ele.data('currentPage', currentPage + 1)
-    const newElements = [
-      ...movie.credits.cast,
-      // ...movie.credits.crew,
-    ]
-    // .filter(credit => cy.getElementById(`person:${credit.id}`).length === 0)
-    // .sort((a, b) => b.popularity - a.popularity)
-    .slice(currentPage, (currentPage + 1) * 10)
-    .map(credit => ([
-        {
-          data: { ...credit, id: `person:${credit.id}` },
-          classes: ['person'],
-          // position: { ...ele.position() },
-          pannable: true,
-        },
-        {
-          data: {
-            id: `movie:${movie.id}-person:${credit.id}`,
-            source: `movie:${movie.id}`,
-            target: `person:${credit.id}`,
-            billing: !isNaN(credit.order) ? `#${credit.order + 1}` : credit.job,
-          }
-        },
-    ]))
-    .flat()
-    layoutUtil.placeNewNodes(
-      cy.add(newElements)
-    )
-    cy.nodes().addClass('background').removeClass('foreground')
-    const neighborhood = ele.closedNeighborhood()
-    neighborhood.removeClass('background').addClass('foreground')
-    cy.animate({ center: { eles: ele } })
-    if (newElements.length) runLayout(
-      [{ nodeId: ele.id(), position: ele.position() }],
-      () => cy.animate({ fit: { eles: neighborhood, padding } })
-    )
-  }
 
-  function expandPerson (person) {
-    const ele = cy.getElementById(`person:${person.id}`)
-    ele.data(person);
-    console.log({ person, ele })
-    const currentPage = ele.data('currentPage') ?? 0;
-    ele.data('currentPage', currentPage + 1)
     const newElements = [
-      ...person.movie_credits.cast,
-      ...person.movie_credits.crew,
+      ...(newData.credits ?? newData.movie_credits).cast,
+      ...(newData.credits ?? newData.movie_credits).crew,
     ]
     // .filter(credit => cy.getElementById(`movie:${credit.id}`).length === 0)
     // .sort((a, b) => b.vote_average - a.vote_average)
     .sort((a, b) => b.popularity - a.popularity)
     .slice(currentPage, (currentPage + 1) * 10)
-    .map(credit => ([
+    .map(credit => {
+      const movie = type === 'movie' ? newData : credit;
+      const person = type === 'person' ? newData : credit;
+
+      return [
         {
-          data: { ...credit, id: `movie:${credit.id}` },
-          classes: ['movie'],
+          data: { ...credit, id: `${otherType}:${credit.id}` },
+          classes: [otherType],
           // position: { ...ele.position() },
           pannable: true,
         },
         {
           data: {
-            id: `movie:${credit.id}-person:${person.id}`,
-            source: `movie:${credit.id}`,
+            id: `movie:${movie.id}-person:${person.id}`,
+            source: `movie:${movie.id}`,
             target: `person:${person.id}`,
             billing: !isNaN(credit.order) ? `#${credit.order + 1}` : credit.job,
           }
         },
-        {
-          data: { id: `rating:${credit.id}`, text: `${Math.round(credit.vote_average*100/10)}%` },
-          classes: ['rating'],
-          // position: { ...ele.position() },
-          pannable: true,
-        },
-        {
-          data: {
-            id: `rating:${credit.id}-movie:${credit.id}`,
-            source: `rating:${credit.id}`,
-            target: `movie:${credit.id}`,
-          }
-        },
-    ]))
+      ]
+    })
     .flat()
+
     layoutUtil.placeNewNodes(
       cy.add(newElements)
     )
+
     cy.nodes().addClass('background').removeClass('foreground')
     const neighborhood = ele.closedNeighborhood()
     neighborhood.removeClass('background').addClass('foreground')
+
     cy.animate({ center: { eles: ele } })
+
     if (newElements.length) runLayout(
-      [{ nodeId: ele.id(), position: ele.position() }],
+      ele,
       () => cy.animate({ fit: { eles: neighborhood, padding } })
     )
   }
@@ -446,11 +290,11 @@ onMounted(() => {
 
       if (id.startsWith('movie:')) {
         const movie = await fetchMovie(id)
-        expandMovie(movie)
+        expandNode(id, movie)
       }
       else if (id.startsWith('person:')) {
         const person = await fetchPerson(id)
-        expandPerson(person)
+        expandNode(id, person)
       }
     }
     finally {
@@ -462,8 +306,6 @@ onMounted(() => {
     const id = node.id()
     console.log( 'dbltapped ' + id );
 
-    const TMDB_BASE = 'https://www.themoviedb.org/'
-
     if (id.startsWith('movie:') || id.startsWith('person:')) {
       window.open(`https://www.themoviedb.org/${id.replace(':', '/')}`)
     }
@@ -474,7 +316,15 @@ onMounted(() => {
 </script>
 
 <style lang="scss">
-@import '@oruga-ui/oruga-next/dist/oruga-full.css';
+@use '@oruga-ui/oruga-next/src/scss/oruga-full-vars.scss' with (
+  $white: #000,
+  $black: #fff,
+  $field-label-color: #fff,
+  $autocomplete-menu-background: #000,
+  $autocomplete-item-color: #fff,
+  $autocomplete-item-hover-color: #fff,
+  $autocomplete-item-hover-background-color: #333,
+);
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400&display=swap');
 
 html,
@@ -493,74 +343,9 @@ body {
 }
 
 .o-modal__content {
-  background-color: #000;
+  width: 50vw;
   padding: 2rem;
   overflow: visible;
-}
-
-.o-field__label {
-  color: #fff;
-}
-
-.o-input {
-  width: 50vw;
-  line-height: 2rem;
-  padding: 0 0.5rem;
-}
-
-.o-acp__menu {
-  background-color: #000;
-}
-
-.o-acp__item {
-  background-color: #000;
-  color: #fff;
-}
-
-.o-acp__item--hover, .o-acp__item:hover {
-  background-color: #333;
-  color: #fff;
-}
-
-.media {
-    align-items: flex-start;
-    display: flex;
-    text-align: left
-}
-
-.media-content {
-    flex-basis: auto;
-    flex-grow: 1;
-    flex-shrink: 1;
-    text-align: left;
-    overflow-y: hidden;
-    overflow-x: auto
-}
-
-.media-left {
-    margin-right: 1rem;
-    flex-basis: auto;
-    flex-grow: 0;
-    flex-shrink: 0
-}
-
-.ex-text-grey {
-    color: grey
-}
-
-h1 {
-  position: fixed;
-  left: 1rem;
-  bottom: 1.5rem;
-  margin: 0;
-  width: 100%;
-  pointer-events: none;
-}
-
-@media (max-width:480px)  {
-  h1 {
-    top: 1.5rem;
-  }
 }
 
 #toolbar {
@@ -576,52 +361,5 @@ h1 {
 
 .o-load__overlay {
   background: rgba(0, 0, 0, 0.3);
-}
-
-/* Glitch Animation - https://codepen.io/lbebber/pen/nqwBKK */
-
-.glitch{
-  position: fixed;
-}
-@keyframes noise-anim{
-  $steps:20;
-  @for $i from 0 through $steps{
-    #{percentage($i*calc(1/$steps))}{
-      clip:rect(random(100)+px,9999px,random(100)+px,0);
-    }
-  }
-}
-.glitch:after{
-  content:attr(data-text);
-  position:absolute;
-  left:2px;
-  text-shadow:-1px 0 red;
-  top:0;
-  color:white;
-  background:black;
-  overflow:hidden;
-  clip:rect(0,900px,0,0); 
-  animation:noise-anim 2s infinite linear alternate-reverse;
-}
-
-@keyframes noise-anim-2{
-  $steps:20;
-  @for $i from 0 through $steps{
-    #{percentage($i*calc(1/$steps))}{
-      clip:rect(random(100)+px,9999px,random(100)+px,0);
-    }
-  }
-}
-.glitch:before{
-  content:attr(data-text);
-  position:absolute;
-  left:-2px;
-  text-shadow:1px 0 blue; 
-  top:0;
-  color:white;
-  background:black;
-  overflow:hidden;
-  clip:rect(0,900px,0,0); 
-  animation:noise-anim-2 3s infinite linear alternate-reverse;
 }
 </style>
