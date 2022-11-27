@@ -22,11 +22,23 @@
         isSearching = false
       }"
     ></TheMovieSearchModal>
+    <TheAboutModal v-model:is-showing="isShowingAbout"></TheAboutModal>
     <TheLogo v-model:is-glitching="isGlitching"></TheLogo>
     <div id="toolbar">
-      <button @click="cy.fit(undefined, padding)">Fit</button>
-      <button @click="cy.fit(cy.$('node.foreground'), padding)">Focus</button>
-      <button @click="isSearching = true">Search</button>
+      <OField>
+        <OButton @click="cy.fit(undefined, padding)" size="small">
+          Fit
+        </OButton>
+        <OButton @click="cy.fit(cy.$('node.foreground'), padding)" size="small">
+          Focus
+        </OButton>
+        <OButton @click="isSearching = true" size="small">
+          Search
+        </OButton>
+        <OButton @click="isShowingAbout = true" size="small">
+          About
+        </OButton>
+      </OField>
       <div id="attribution">
         Data from&nbsp;<a
           target="_blank"
@@ -48,7 +60,7 @@ import fcose from 'cytoscape-fcose'
 import cola from 'cytoscape-cola'
 import layoutUtilities from 'cytoscape-layout-utilities';
 import { MovieDb } from 'moviedb-promise'
-import { OLoading } from '@oruga-ui/oruga-next'
+import { OLoading, OField, OButton } from '@oruga-ui/oruga-next'
 
 cytoscape.use(fcose)
 cytoscape.use(cola)
@@ -60,7 +72,8 @@ let cy
 const moviedb = new MovieDb('b95ecffb4e929829fbc815288785b66e')
 
 const isLoading = ref(true)
-const isSearching = ref(false);
+const isSearching = ref(false)
+const isShowingAbout = ref(false)
 const isGlitching = ref(false)
 
 const cursor = ref('inherit')
@@ -320,6 +333,9 @@ onMounted(() => {
   $white: #000,
   $black: #fff,
   $field-label-color: #fff,
+  $button-color: #fff,
+  $button-background-color: #444,
+  $button-border: 1px solid #111,
   $autocomplete-menu-background: #000,
   $autocomplete-item-color: #fff,
   $autocomplete-item-hover-color: #fff,
@@ -338,6 +354,14 @@ body {
   font-family: 'Roboto Mono', monospace;
 }
 
+:link {
+  color: #01b4e4;
+}
+
+:visited {
+  color: #90cea1;
+}
+
 #container, #cy {
   height: 100vh;
 }
@@ -345,18 +369,24 @@ body {
 .o-modal__content {
   width: 50vw;
   padding: 2rem;
-  overflow: visible;
 }
 
 #toolbar {
   position: fixed;
   bottom: 1.5rem;
   right: 1rem;
+
+  & .o-field {
+    display: inline-block;
+    margin-bottom: 0;
+  }
 }
 
 #attribution {
   display: inline-block;
   padding-left: 1rem;
+  vertical-align: bottom;
+  margin-bottom: -3px;
 }
 
 .o-load__overlay {

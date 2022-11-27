@@ -1,5 +1,6 @@
 <template>
   <OModal
+    class="modal-movie-search"
     :active="isSearching"
     @update:active="(newValue: MovieResult) => emit('update:isSearching', newValue)"
   >
@@ -116,6 +117,10 @@ function getMoreAsyncData() {
 </script>
 
 <style lang="scss">
+.modal-movie-search .o-modal__content {
+  overflow: visible;
+}
+
 .media {
     align-items: flex-start;
     display: flex;
