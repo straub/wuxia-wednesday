@@ -129,8 +129,12 @@ onMounted(() => {
           'font-size': 10,
           'min-zoomed-font-size': 8,
           'text-wrap': 'wrap',
-          'text-max-width': 200,
+          'text-max-width': 100,
           'text-valign': 'bottom',
+          'text-halign': 'center',
+          'text-justification': 'center',
+          'text-margin-x': 0,
+          'text-margin-y': 0,
         }
       },
       {
@@ -141,7 +145,11 @@ onMounted(() => {
             !ele.data('poster_path') || ele.data('original_language') !== 'en' ?
             `${ele.data('title')}\n` :
             ''
-          }(${ele.data('release_date').split('-')[0]}) ${
+          }${
+            ele.data('release_date') ? `(${
+              ele.data('release_date').split('-')[0]
+            }) ` : ''
+          }${
             ele.data('vote_count') > 10 ? `${
               Math.round(ele.data('vote_average')*100/10)
             }% `: ''
@@ -157,6 +165,14 @@ onMounted(() => {
         }
       },
       {
+        selector: 'node.movie[!poster_path]',
+        style: {
+          'text-margin-y': 0,
+          'text-valign': 'center',
+          'background-fill': 'solid',
+        }
+      },
+      {
         selector: 'node.person',
         style: {
           label: 'data(name)',
@@ -165,6 +181,15 @@ onMounted(() => {
           'z-index': 2,
           shape: 'ellipse',
           'background-image': ele => 'https://image.tmdb.org/t/p/w185' + ele.data('profile_path'),
+        }
+      },
+      {
+        selector: 'node.person[!profile_path]',
+        style: {
+          'text-valign': 'center',
+          'background-fill': 'solid',
+          'background-blacken': 0.5,
+          'background-color': '#333',
         }
       },
       {
