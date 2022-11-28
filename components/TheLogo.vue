@@ -14,7 +14,6 @@ const props = defineProps({
 const emit = defineEmits(['update:isGlitching'])
 
 watch(() => props.isGlitching, (newValue) => {
-  console.log('changed', { newValue })
   if (newValue) {
     setTimeout(() => emit('update:isGlitching', false), 1000 + 2000 * Math.random())
   }

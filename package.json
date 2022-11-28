@@ -8,6 +8,7 @@
     "postinstall": "nuxt prepare"
   },
   "devDependencies": {
+    "@mdi/js": "7.0.96",
     "@oruga-ui/oruga-next": "0.5.9",
     "@oruga-ui/theme-bulma": "0.2.8",
     "@types/cytoscape": "3.19.9",

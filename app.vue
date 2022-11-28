@@ -336,10 +336,12 @@ onMounted(() => {
   $button-color: #fff,
   $button-background-color: #444,
   $button-border: 1px solid #111,
+  $modal-close-color: #fff,
   $autocomplete-menu-background: #000,
   $autocomplete-item-color: #fff,
   $autocomplete-item-hover-color: #fff,
   $autocomplete-item-hover-background-color: #333,
+  $icon-spin-duration: 0.5s,
 );
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400&display=swap');
 
