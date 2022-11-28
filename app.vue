@@ -7,6 +7,7 @@
     <div
       id="cy"
       :style="{ cursor }"
+      :title="title"
     ></div>
     <TheMovieSearchModal
       v-model:is-searching="isSearching"
@@ -77,6 +78,7 @@ const isShowingAbout = ref(false)
 const isGlitching = ref(false)
 
 const cursor = ref('inherit')
+const title = ref('')
 
 const padding = 30
 
@@ -157,8 +159,8 @@ onMounted(() => {
             ele.data('runtime') ? `${ele.data('runtime')}m` : ''
           }`,
           'text-margin-y': 5,
-          width: 92,
-          height: 138,
+          width: 45,
+          height: 68,
           'z-index': 1,
           shape: 'round-rectangle',
           'background-image': ele => 'https://image.tmdb.org/t/p/w500' + ele.data('poster_path'),
@@ -170,6 +172,8 @@ onMounted(() => {
           'text-margin-y': 0,
           'text-valign': 'center',
           'background-fill': 'solid',
+          'background-color': '#333',
+          'background-image': null,
         }
       },
       {
@@ -188,8 +192,8 @@ onMounted(() => {
         style: {
           'text-valign': 'center',
           'background-fill': 'solid',
-          'background-blacken': 0.5,
           'background-color': '#333',
+          'background-image': null,
         }
       },
       {
@@ -284,12 +288,14 @@ onMounted(() => {
 
       return [
         {
+          group: 'nodes',
           data: { ...credit, id: `${otherType}:${credit.id}` },
           classes: [otherType],
           // position: { ...ele.position() },
           pannable: true,
         },
         {
+          group: 'edges',
           data: {
             id: `movie:${movie.id}-person:${person.id}`,
             source: `movie:${movie.id}`,
@@ -348,8 +354,15 @@ onMounted(() => {
       window.open(`https://www.themoviedb.org/${id.replace(':', '/')}`)
     }
   })
-  .on('mouseover', 'node', () => cursor.value = 'pointer')
-  .on('mouseout', 'node', () => cursor.value = 'inherit')
+  .on('mouseover', 'node', (evt) => {
+    const node = evt.target;
+    cursor.value = 'pointer'
+    title.value = node.data('title') ?? ''
+  })
+  .on('mouseout', 'node', () => {
+    cursor.value = 'inherit'
+    title.value = ''
+  })
 })
 </script>
 
