@@ -178,6 +178,7 @@ onMounted(() => {
           'z-index': 2,
           shape: 'ellipse',
           'background-image': ele => 'https://image.tmdb.org/t/p/w185' + ele.data('profile_path'),
+          'background-offset-y': '-40%',
         }
       },
       {
