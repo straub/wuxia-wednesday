@@ -67,6 +67,7 @@ import cola from 'cytoscape-cola'
 import layoutUtilities from 'cytoscape-layout-utilities';
 import { MovieDb } from 'moviedb-promise'
 import { OLoading, OField, OButton } from '@oruga-ui/oruga-next'
+import { gzip, ungzip } from 'pako'
 
 cytoscape.use(fcose)
 cytoscape.use(cola)
@@ -104,7 +105,9 @@ const fetchPerson = async id => {
 const ELEMENTS_HASH_PREFIX = '#elements:'
 
 const saveToUrl = () => location.hash = `${ELEMENTS_HASH_PREFIX}${Buffer.from(
-    JSON.stringify(cy.elements().jsons())
+    gzip(
+      JSON.stringify(cy.elements().jsons())
+    )
   ).toString('base64')}`
 
 onMounted(async () => {
@@ -233,11 +236,13 @@ onMounted(async () => {
 
   if (location.hash.startsWith(ELEMENTS_HASH_PREFIX)) {
     const elements = JSON.parse(
-      Buffer.from(
-        location.hash.replace(ELEMENTS_HASH_PREFIX, ''),
-        'base64'
+      ungzip(
+        Buffer.from(
+          location.hash.replace(ELEMENTS_HASH_PREFIX, ''),
+          'base64'
+        ),
+        { to: 'string' },
       )
-      .toString('utf8')
     )
     console.log({ elements })
 
