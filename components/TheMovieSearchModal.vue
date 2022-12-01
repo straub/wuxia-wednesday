@@ -31,9 +31,11 @@
             <div class="media-content">
               {{ movie.title }}
               <br />
-              <small>
+              <small v-if="movie.release_date">
                 ({{ movie.release_date.split('-')[0] }})
-                {{ movie.vote_count > 10 ? Math.round(movie.vote_average*100/10) : '' }}%
+              </small>
+              <small v-if="movie.vote_count > 10">
+                {{ Math.round(movie.vote_average*100/10) }}%
               </small>
             </div>
           </div>
