@@ -11,12 +11,12 @@
     </p>
     <h3>How to Use</h3>
     <ul>
-      <li>Click "Search" to choose a different movie and start exploring.</li>
+      <li>Click "<OIcon title="Search" icon="movie-search-outline" size="small"></OIcon>" to choose a different movie and start exploring.</li>
       <li>Click movie posters or people to load more data and expand their connections on the graph.</li>
       <li>Double click to open more details on TMDb.</li>
       <li>Click and drag to pan the graph, scroll or pinch to zoom.</li>
-      <li>Click "Fit" to fit the whole graph within the viewport.</li>
-      <li>Click "Focus" to fit only the currently highlighted nodes within the viewport.</li>
+      <li>Click "<OIcon title="Fit All" icon="fit-to-page-outline" size="small"></OIcon>" to fit the whole graph within the viewport.</li>
+      <li>Click "<OIcon title="Focus on Highlighted" icon="image-filter-center-focus" size="small"></OIcon>" to fit only the currently highlighted nodes within the viewport.</li>
     </ul>
     <h3>Credits</h3>
     <p>
@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { OModal } from '@oruga-ui/oruga-next'
+import { OModal, OIcon } from '@oruga-ui/oruga-next'
 
 defineProps({
   isShowing: Boolean,

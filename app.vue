@@ -27,18 +27,11 @@
     <TheLogo v-model:is-glitching="isGlitching"></TheLogo>
     <div id="toolbar">
       <OField>
-        <OButton @click="cy.fit(undefined, padding)" size="small">
-          Fit
-        </OButton>
-        <OButton @click="cy.fit(cy.$('node.foreground'), padding)" size="small">
-          Focus
-        </OButton>
-        <OButton @click="isSearching = true" size="small">
-          Search
-        </OButton>
-        <OButton @click="isShowingAbout = true" size="small">
-          About
-        </OButton>
+        <OButton @click="cy.fit(undefined, padding)" size="small" title="Fit All" icon-right="fit-to-page-outline"></OButton>
+        <OButton @click="cy.fit(cy.$('node.foreground'), padding)" size="small" title="Focus on Highlighted" icon-right="image-filter-center-focus"></OButton>
+        <OButton @click="isSearching = true" size="small" title="Search" icon-right="movie-search-outline"></OButton>
+        <OButton @click="isShowingAbout = true" size="small" title="About" icon-right="information-outline"></OButton>
+        <!-- <OButton @click="" size="small" title="Settings" icon-right="cog-outline"></OButton> -->
       </OField>
       <div id="attribution">
         Data from&nbsp;<a

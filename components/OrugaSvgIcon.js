@@ -1,8 +1,24 @@
 
 import { h, computed } from 'vue'
-import { mdiClose, mdiLoading } from '@mdi/js'
+import {
+    mdiClose,
+    mdiLoading,
+    mdiFitToPageOutline,
+    mdiImageFilterCenterFocus,
+    mdiMovieSearchOutline,
+    mdiInformationOutline,
+    mdiCogOutline,
+} from '@mdi/js'
 
-const knownIcons = { mdiClose, mdiLoading }
+const knownIcons = {
+    mdiClose,
+    mdiLoading,
+    mdiFitToPageOutline,
+    mdiImageFilterCenterFocus,
+    mdiMovieSearchOutline,
+    mdiInformationOutline,
+    mdiCogOutline,
+}
 
 export default {
     props: {
@@ -27,7 +43,7 @@ export default {
             console.warn('unknown icon', iconKey)
         })
 
-        const sizeNumber = computed(() => Number((props.size || 24).replace(/(mdi-|px)/g, '')))
+        const sizeNumber = computed(() => Number(String(props.size || 24).replace(/(mdi-|px)/g, '')))
 
         return () => {
             return h(
