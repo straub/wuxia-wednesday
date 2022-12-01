@@ -12,5 +12,10 @@ export default defineNuxtConfig({
         path: 'hmr/',
       }
     }
+  },
+  app: {
+    head: {
+      title: 'Wuxia Wednesday'
+    }
   }
 })
