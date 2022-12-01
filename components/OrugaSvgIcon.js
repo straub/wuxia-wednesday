@@ -6,6 +6,7 @@ import {
     mdiFitToPageOutline,
     mdiImageFilterCenterFocus,
     mdiMovieSearchOutline,
+    mdiContentSaveOutline,
     mdiInformationOutline,
     mdiCogOutline,
 } from '@mdi/js'
@@ -16,6 +17,7 @@ const knownIcons = {
     mdiFitToPageOutline,
     mdiImageFilterCenterFocus,
     mdiMovieSearchOutline,
+    mdiContentSaveOutline,
     mdiInformationOutline,
     mdiCogOutline,
 }

@@ -27,10 +27,21 @@
     <TheLogo v-model:is-glitching="isGlitching"></TheLogo>
     <div id="toolbar">
       <OField>
-        <OButton @click="cy.fit(undefined, padding)" size="small" title="Fit All" icon-right="fit-to-page-outline"></OButton>
-        <OButton @click="cy.fit(cy.$('node.foreground'), padding)" size="small" title="Focus on Highlighted" icon-right="image-filter-center-focus"></OButton>
-        <OButton @click="isSearching = true" size="small" title="Search" icon-right="movie-search-outline"></OButton>
-        <OButton @click="isShowingAbout = true" size="small" title="About" icon-right="information-outline"></OButton>
+        <OButton
+          @click="cy.fit(undefined, padding)"
+          size="small" title="Fit All" icon-right="fit-to-page-outline"></OButton>
+        <OButton
+          @click="cy.fit(cy.$('node.foreground'), padding)"
+          size="small" title="Focus on Highlighted" icon-right="image-filter-center-focus"></OButton>
+        <OButton
+          @click="isSearching = true"
+          size="small" title="Search" icon-right="movie-search-outline"></OButton>
+        <OButton
+          @click="saveToUrl"
+          size="small" title="Save to URL" icon-right="content-save-outline"></OButton>
+        <OButton
+          @click="isShowingAbout = true"
+          size="small" title="About" icon-right="information-outline"></OButton>
         <!-- <OButton @click="" size="small" title="Settings" icon-right="cog-outline"></OButton> -->
       </OField>
       <div id="attribution">
@@ -49,6 +60,7 @@
 </template>
 
 <script setup>
+import { Buffer } from 'buffer'
 import cytoscape from 'cytoscape'
 import fcose from 'cytoscape-fcose'
 import cola from 'cytoscape-cola'
@@ -75,10 +87,6 @@ const title = ref('')
 
 const padding = 30
 
-const { results: [{ id: mostPopularId }] } = await moviedb.moviePopular()
-
-console.log({ mostPopularId });
-
 const fetchMovie = async id => {
   id = String(id).replace('movie:', '')
 
@@ -93,15 +101,13 @@ const fetchPerson = async id => {
   return person
 }
 
-const mostPopular = await fetchMovie(mostPopularId)
-// const mostPopular = await fetchMovie(614919)
-// const mostPopular = await fetchMovie(287757)
+const ELEMENTS_HASH_PREFIX = '#elements:'
 
-console.log({ mostPopular });
+const saveToUrl = () => location.hash = `${ELEMENTS_HASH_PREFIX}${Buffer.from(
+    JSON.stringify(cy.elements().jsons())
+  ).toString('base64')}`
 
-isLoading.value = false
-
-onMounted(() => {
+onMounted(async () => {
 
   const config = {
     autoungrabify: true,
@@ -220,19 +226,48 @@ onMounted(() => {
     ],
   }
 
-  const elements = [
-    {
-      data: { ...mostPopular, id: `movie:${mostPopular.id}` },
-      classes: ['movie', 'foreground'],
-      pannable: true,
-    },
-  ]
-
   cy = cytoscape({
     ...config,
     container: document.getElementById('cy'),
-    elements,
   });
+
+  if (location.hash.startsWith(ELEMENTS_HASH_PREFIX)) {
+    const elements = JSON.parse(
+      Buffer.from(
+        location.hash.replace(ELEMENTS_HASH_PREFIX, ''),
+        'base64'
+      )
+      .toString('utf8')
+    )
+    console.log({ elements })
+
+    cy.add(elements)
+  }
+  else {
+    const { results: [{ id: mostPopularId }] } = await moviedb.moviePopular()
+
+    console.log({ mostPopularId });
+
+    const initialMovie = await fetchMovie(mostPopularId)
+    // const initialMovie = await fetchMovie(614919)
+    // const initialMovie = await fetchMovie(287757)
+
+    console.log({ initialMovie });
+
+    const elements = [
+      {
+        group: 'nodes',
+        data: { ...initialMovie, id: `movie:${initialMovie.id}` },
+        classes: ['movie', 'foreground'],
+        pannable: true,
+      },
+    ]
+
+    cy.add(elements)
+  }
+
+  cy.fit(undefined, padding)
+  isLoading.value = false
 
   const layoutUtil = cy.layoutUtilities()
 
