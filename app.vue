@@ -234,7 +234,9 @@ onMounted(async () => {
     container: document.getElementById('cy'),
   });
 
-  if (location.hash.startsWith(ELEMENTS_HASH_PREFIX)) {
+  const restoreFromUrl = () => {
+    cy.elements().remove()
+
     const elements = JSON.parse(
       ungzip(
         Buffer.from(
@@ -247,6 +249,19 @@ onMounted(async () => {
     console.log({ elements })
 
     cy.add(elements)
+  }
+
+  const onHashchange = () => {
+    if (!location.hash) return;
+    restoreFromUrl()
+    cy.fit(undefined, padding)
+  }
+
+  addEventListener('hashchange', onHashchange);
+  onUnmounted(() => removeEventListener('hashchange', onHashchange))
+
+  if (location.hash.startsWith(ELEMENTS_HASH_PREFIX)) {
+    restoreFromUrl()
   }
   else {
     const { results: [{ id: mostPopularId }] } = await moviedb.moviePopular()
