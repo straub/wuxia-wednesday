@@ -211,9 +211,9 @@ onMounted(() => {
           color: '#777',
           'font-family': 'Roboto Mono, monospace',
           'font-size': 10,
-          'source-text-offset': 20,
           'min-zoomed-font-size': 20,
-          'source-label': 'data(billing)',
+          'target-text-offset': 20,
+          'target-label': 'data(billing)',
         }
       },
     ],
