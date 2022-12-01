@@ -297,7 +297,12 @@ onMounted(async () => {
     const type = id.split(':')[0]
     const otherType = type === 'movie' ? 'person' : 'movie'
     const ele = cy.getElementById(id)
-    ele.data(newData);
+    const {
+      name, title, profile_path, poster_path, original_language, release_date, vote_count, vote_average
+    } = newData
+    ele.data({
+      name, title, profile_path, poster_path, original_language, release_date, vote_count, vote_average
+    });
     console.log({ id, type, newData, ele })
 
     const currentPage = ele.data('currentPage') ?? 0;
