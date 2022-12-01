@@ -268,18 +268,17 @@ onMounted(() => {
     const currentPage = ele.data('currentPage') ?? 0;
     ele.data('currentPage', currentPage + 1)
 
-    const newElements = [
+    const allCredits = [
       ...(newData.credits ?? newData.movie_credits).cast,
       ...(newData.credits ?? newData.movie_credits).crew,
     ]
+
+    const newNodes = allCredits
     // .filter(credit => cy.getElementById(`movie:${credit.id}`).length === 0)
     // .sort((a, b) => b.vote_average - a.vote_average)
     .sort((a, b) => b.popularity - a.popularity)
-    .slice(currentPage, (currentPage + 1) * 10)
+    .slice(currentPage * 10, (currentPage + 1) * 10)
     .map(credit => {
-      const movie = type === 'movie' ? newData : credit;
-      const person = type === 'person' ? newData : credit;
-
       return [
         {
           group: 'nodes',
@@ -288,6 +287,16 @@ onMounted(() => {
           // position: { ...ele.position() },
           pannable: true,
         },
+      ]
+    })
+    .flat()
+
+    const allEdges = allCredits
+    .map(credit => {
+      const movie = type === 'movie' ? newData : credit;
+      const person = type === 'person' ? newData : credit;
+
+      return [
         {
           group: 'edges',
           data: {
@@ -302,8 +311,13 @@ onMounted(() => {
     .flat()
 
     layoutUtil.placeNewNodes(
-      cy.add(newElements)
+      cy.add(newNodes)
     )
+
+    const allValidEdges = allEdges
+    .filter(edge => cy.$id(edge.data.source).size() && cy.$id(edge.data.target).size())
+
+    cy.add(allValidEdges)
 
     cy.nodes().addClass('background').removeClass('foreground')
     const neighborhood = ele.closedNeighborhood()
@@ -311,7 +325,7 @@ onMounted(() => {
 
     cy.animate({ center: { eles: ele } })
 
-    if (newElements.length) runLayout(
+    if (newNodes.length) runLayout(
       ele,
       () => cy.animate({ fit: { eles: neighborhood, padding } })
     )
