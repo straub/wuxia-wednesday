@@ -26,6 +26,16 @@
     <TheAboutModal v-model:is-showing="isShowingAbout"></TheAboutModal>
     <TheLogo v-model:is-glitching="isGlitching"></TheLogo>
     <div id="toolbar">
+      <div class="attribution">
+        Data from&nbsp;<a
+          target="_blank"
+          href="https://www.themoviedb.org/"
+        ><img
+            title="The Movie Database"
+            src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg"
+          />
+        </a>
+      </div>
       <OField>
         <OButton
           @click="cy.fit(undefined, padding)"
@@ -44,16 +54,6 @@
           size="small" title="About" icon-right="information-outline"></OButton>
         <!-- <OButton @click="" size="small" title="Settings" icon-right="cog-outline"></OButton> -->
       </OField>
-      <div id="attribution">
-        Data from&nbsp;<a
-          target="_blank"
-          href="https://www.themoviedb.org/"
-        ><img
-            title="The Movie Database"
-            src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg"
-          />
-        </a>
-      </div>
     </div>
     <OLoading full-page v-model:active="isLoading"></OLoading>
   </div>
@@ -484,17 +484,17 @@ body {
   bottom: 1.5rem;
   right: 1rem;
 
+  & .attribution {
+    // There's almost certainly a better way to do this...
+    position: fixed;
+    right: 1rem;
+    bottom: 3.5rem;
+  }
+
   & .o-field {
     display: inline-block;
     margin-bottom: 0;
   }
-}
-
-#attribution {
-  display: inline-block;
-  padding-left: 1rem;
-  vertical-align: bottom;
-  margin-bottom: -3px;
 }
 
 .o-load__overlay {
