@@ -15,7 +15,10 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: 'Wuxia Wednesday'
+      title: 'Wuxia Wednesday',
+      meta: [
+        { name: 'description', content: 'Movie graph explorer' },
+      ]
     }
   }
 })
