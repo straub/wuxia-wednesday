@@ -16,7 +16,7 @@
     "cytoscape-cola": "2.5.1",
     "cytoscape-fcose": "2.1.0",
     "cytoscape-layout-utilities": "1.1.1",
-    "moviedb-promise": "3.2.1",
+    "moviedb-promise": "3.3.1",
     "nuxt": "3.0.0",
     "pako": "2.1.0",
     "sass": "1.56.1"
