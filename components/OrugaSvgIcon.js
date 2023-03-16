@@ -9,6 +9,7 @@ import {
     mdiContentSaveOutline,
     mdiInformationOutline,
     mdiCogOutline,
+    mdiReload,
 } from '@mdi/js'
 
 const knownIcons = {
@@ -20,6 +21,7 @@ const knownIcons = {
     mdiContentSaveOutline,
     mdiInformationOutline,
     mdiCogOutline,
+    mdiReload,
 }
 
 export default {

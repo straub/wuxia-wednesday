@@ -38,20 +38,20 @@
       </div>
       <OField>
         <OButton
-          @click="cy.fit(undefined, padding)"
-          size="small" title="Fit All" icon-right="fit-to-page-outline"></OButton>
-        <OButton
-          @click="cy.fit(cy.$('node.foreground'), padding)"
-          size="small" title="Focus on Highlighted" icon-right="image-filter-center-focus"></OButton>
+          @click="mode = mode === 'fit' ? 'focus' : 'fit'; fitOrFocus()"
+          size="small"
+          :title="mode === 'fit' ? 'Focus on Highlighted' : 'Fit All'"
+          :icon-right="mode === 'fit' ? 'image-filter-center-focus' : 'fit-to-page-outline'"
+        ></OButton>
         <OButton
           @click="isSearching = true"
           size="small" title="Search" icon-right="movie-search-outline"></OButton>
         <OButton
-          @click="saveToUrl"
-          size="small" title="Save to URL" icon-right="content-save-outline"></OButton>
-        <OButton
           @click="isShowingAbout = true"
           size="small" title="About" icon-right="information-outline"></OButton>
+        <OButton
+          @click="reload()"
+          size="small" title="Reload" icon-right="reload"></OButton>
         <!-- <OButton @click="" size="small" title="Settings" icon-right="cog-outline"></OButton> -->
       </OField>
     </div>
@@ -86,7 +86,15 @@ const isGlitching = ref(false)
 const cursor = ref('inherit')
 const title = ref('')
 
+const mode = ref('focus')
+
 const padding = 30
+
+const fitOrFocus = () => mode.value === 'fit' ?
+    cy.fit(undefined, padding) :
+    cy.fit(cy.$('node.foreground'), padding)
+
+const reload = () => window.location.href = '/'
 
 const fetchMovie = async id => {
   id = String(id).replace('movie:', '')
@@ -254,7 +262,7 @@ onMounted(async () => {
   const onHashchange = () => {
     if (!location.hash) return;
     restoreFromUrl()
-    cy.fit(undefined, padding)
+    fitOrFocus()
   }
 
   addEventListener('hashchange', onHashchange);
@@ -284,9 +292,11 @@ onMounted(async () => {
     ]
 
     cy.add(elements)
+
+    saveToUrl();
   }
 
-  cy.fit(undefined, padding)
+  fitOrFocus()
   isLoading.value = false
 
   const layoutUtil = cy.layoutUtilities()
@@ -305,7 +315,10 @@ onMounted(async () => {
     // nodeRepulsion: node => 10000,
     padding,
     fixedNodeConstraint: ele ? [{ nodeId: ele.id(), position: ele.position() }] : [],
-    stop: cb,
+    stop: () => {
+      saveToUrl();
+      cb();
+    },
   })
   .run()
 
@@ -387,7 +400,7 @@ onMounted(async () => {
 
     if (newNodes.length) runLayout(
       ele,
-      () => cy.animate({ fit: { eles: neighborhood, padding } })
+      () => cy.animate({ fit: { eles: mode.value === 'focus' ? neighborhood : undefined, padding } })
     )
   }
 
