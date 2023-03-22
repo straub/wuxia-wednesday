@@ -17,7 +17,7 @@
           v-if="column.field == 'poster' && row.poster_path"
           width="32"
           crossorigin="anonymous"
-          :src="`https://image.tmdb.org/t/p/w342${row.poster_path}`"
+          :src="`https://image.tmdb.org/t/p/w500${row.poster_path}`"
           @dblclick="openUrl(`https://www.themoviedb.org/${row.id.replace(':', '/')}`)"
         />
         <span v-else-if="column.field === 'release_date' && row.release_date">
