@@ -24,6 +24,7 @@
       }"
     ></TheMovieSearchModal>
     <TheAboutModal v-model:is-showing="isShowingAbout"></TheAboutModal>
+    <TheMoviesListModal v-model:is-showing="isShowingMoviesList" :movies="allMovies"></TheMoviesListModal>
     <TheLogo v-model:is-glitching="isGlitching"></TheLogo>
     <div id="toolbar">
       <div class="attribution">
@@ -52,6 +53,9 @@
         <OButton
           @click="reload()"
           size="small" title="Reload" icon-right="reload"></OButton>
+        <OButton
+          @click="isShowingMoviesList = true"
+          size="small" title="Movies List" icon-right="table"></OButton>
         <!-- <OButton @click="" size="small" title="Settings" icon-right="cog-outline"></OButton> -->
       </OField>
     </div>
@@ -81,12 +85,15 @@ const moviedb = new MovieDb('b95ecffb4e929829fbc815288785b66e')
 const isLoading = ref(true)
 const isSearching = ref(false)
 const isShowingAbout = ref(false)
+const isShowingMoviesList = ref(false)
 const isGlitching = ref(false)
 
 const cursor = ref('inherit')
 const title = ref('')
 
 const mode = ref('focus')
+
+const allMovies = ref([])
 
 const padding = 30
 
@@ -112,11 +119,15 @@ const fetchPerson = async id => {
 
 const ELEMENTS_HASH_PREFIX = '#elements:'
 
-const saveToUrl = () => location.hash = `${ELEMENTS_HASH_PREFIX}${Buffer.from(
+const saveToUrl = () => {
+  location.hash = `${ELEMENTS_HASH_PREFIX}${Buffer.from(
     gzip(
       JSON.stringify(cy.elements().jsons())
     )
   ).toString('base64')}`
+
+  allMovies.value = cy.$('.movie').map(ele => ele.data());
+};
 
 onMounted(async () => {
 
@@ -257,6 +268,8 @@ onMounted(async () => {
     console.log({ elements })
 
     cy.add(elements)
+
+    allMovies.value = cy.$('.movie').map(ele => ele.data());
   }
 
   const onHashchange = () => {
@@ -326,27 +339,29 @@ onMounted(async () => {
    * @param {string} id
    * @param {Object} [newData]
    */
-  function expandNode (id, newData = {}) {
+  async function expandNode (id, newData = {}) {
     const type = id.split(':')[0]
     const otherType = type === 'movie' ? 'person' : 'movie'
     const ele = cy.getElementById(id)
     const {
-      name, title, profile_path, poster_path, original_language, release_date, vote_count, vote_average
+      name, title, profile_path, poster_path, original_language, release_date, vote_count, vote_average,
+      popularity, runtime,
     } = newData
     ele.data({
-      name, title, profile_path, poster_path, original_language, release_date, vote_count, vote_average
+      name, title, profile_path, poster_path, original_language, release_date, vote_count, vote_average,
+      popularity, runtime,
     });
     console.log({ id, type, newData, ele })
 
     const currentPage = ele.data('currentPage') ?? 0;
     ele.data('currentPage', currentPage + 1)
 
-    const allCredits = [
+    const credits = [
       ...(newData.credits ?? newData.movie_credits).cast,
-      ...(newData.credits ?? newData.movie_credits).crew,
+      // ...(newData.credits ?? newData.movie_credits).crew,
     ]
 
-    const newNodes = allCredits
+    const newNodes = credits
     // .filter(credit => cy.getElementById(`movie:${credit.id}`).length === 0)
     // .sort((a, b) => b.vote_average - a.vote_average)
     .sort((a, b) => b.popularity - a.popularity)
@@ -364,7 +379,21 @@ onMounted(async () => {
     })
     .flat()
 
-    const allEdges = allCredits
+    if (type === 'person') {
+      // Fetch additional data on new movies
+      await Promise.all(
+        newNodes.map(async (node) => {
+          const movie = await fetchMovie(node.data.id.replace('movie:', ''))
+
+          node.data = {
+            ...movie,
+            ...node.data,
+          }
+        })
+      )
+    }
+
+    const allEdges = credits
     .map(credit => {
       const movie = type === 'movie' ? newData : credit;
       const person = type === 'person' ? newData : credit;
@@ -415,11 +444,11 @@ onMounted(async () => {
 
       if (id.startsWith('movie:')) {
         const movie = await fetchMovie(id)
-        expandNode(id, movie)
+        await expandNode(id, movie)
       }
       else if (id.startsWith('person:')) {
         const person = await fetchPerson(id)
-        expandNode(id, person)
+        await expandNode(id, person)
       }
     }
     finally {
@@ -461,6 +490,9 @@ onMounted(async () => {
   $autocomplete-item-hover-color: #fff,
   $autocomplete-item-hover-background-color: #333,
   $icon-spin-duration: 0.5s,
+  $table-background-color: #000,
+  $table-color: #fff,
+  $table-th-color: #bbb,
 );
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400&display=swap');
 

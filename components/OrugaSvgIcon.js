@@ -10,6 +10,8 @@ import {
     mdiInformationOutline,
     mdiCogOutline,
     mdiReload,
+    mdiTable,
+    mdiArrowUp,
 } from '@mdi/js'
 
 const knownIcons = {
@@ -22,6 +24,8 @@ const knownIcons = {
     mdiInformationOutline,
     mdiCogOutline,
     mdiReload,
+    mdiTable,
+    mdiArrowUp,
 }
 
 export default {
