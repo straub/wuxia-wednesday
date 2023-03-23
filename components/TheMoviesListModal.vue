@@ -139,7 +139,6 @@ const rows = computed(() => props.movies.map((movie: ExtendedMovieResponse) => (
 .modal-movies-list .movie-list-details {
   margin-right: 1rem;
   margin-bottom: 1rem;
-  margin-top: 1rem;
   float: left;
   width: 20%;
 }
