@@ -21,6 +21,7 @@
           pannable: true,
         }])
         cy.fit(ele, padding)
+        saveToUrl()
         isSearching = false
       }"
     ></TheMovieSearchModal>
