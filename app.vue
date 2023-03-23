@@ -11,9 +11,10 @@
     ></div>
     <TheMovieSearchModal
       v-model:is-searching="isSearching"
-      @select="movie => {
+      @select="async (movie) => {
         if (!movie) return;
         cy.nodes().remove()
+        movie = await fetchMovie(movie.id)
         const ele = cy.add([{
           data: { ...movie, id: `movie:${movie.id}` },
           classes: ['movie', 'foreground'],
