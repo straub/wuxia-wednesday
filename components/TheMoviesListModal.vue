@@ -5,7 +5,7 @@
     @update:active="(newValue: boolean) => emit('update:isShowing', newValue)"
   >
     <OTable
-      :data="movies"
+      :data="rows"
       default-sort-direction="desc"
     >
       <OTableColumn
@@ -27,15 +27,6 @@
         >
           {{ row.title }}
         </a>
-        <span v-else-if="column.field === 'release_date' && row.release_date">
-          {{ row.release_date.split('-')[0] }}
-        </span>
-        <span v-else-if="column.field === 'vote_average' && row.vote_average">
-          {{ Math.round(row.vote_average*100/10) }}%
-        </span>
-        <span v-else-if="column.field === 'runtime' && row.runtime">
-          {{ row.runtime }}m
-        </span>
         <span v-else>{{ row[column.field] ?? '~' }}</span>
       </OTableColumn>
     </OTable>
@@ -43,14 +34,15 @@
 </template>
 
 <script setup lang="ts">
+import { MovieResponse, CreditsResponse } from 'moviedb-promise/dist/request-types'
 import { OModal, OTable, OTableColumn } from '@oruga-ui/oruga-next'
 
-defineProps({
-  isShowing: Boolean,
-  movies: Array
-})
+type ExtendedMovieResponse = MovieResponse & { credits: CreditsResponse }
 
-const openUrl = (url: string) => window.open(url)
+const props = defineProps<{
+  isShowing: Boolean,
+  movies: ExtendedMovieResponse[],
+}>()
 
 const emit = defineEmits(['update:isShowing']);
 
@@ -64,12 +56,8 @@ const columns = ref([
     label: 'Title',
     sortable: true,
   },
-  // {
-  //   field: 'original_language',
-  //   label: 'Lang',
-  // },
   {
-    field: 'release_date',
+    field: 'release_year',
     label: 'Release',
     sortable: true,
   },
@@ -93,7 +81,20 @@ const columns = ref([
     label: 'Runtime',
     sortable: true,
   },
+  {
+    field: 'cast_num',
+    label: 'Cast',
+    sortable: true,
+  },
 ]);
+
+const rows = computed(() => props.movies.map((movie: ExtendedMovieResponse) => ({
+  ...movie,
+  release_year: movie.release_date?.split('-')[0],
+  vote_average: movie.vote_average && `${Math.round(movie.vote_average*100/10)}%`,
+  runtime: movie.runtime && `${movie.runtime}m`,
+  cast_num: movie.credits.cast?.length,
+})))
 </script>
 
 <style lang="scss">
