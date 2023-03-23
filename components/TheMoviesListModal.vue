@@ -45,15 +45,17 @@
         <tr>
           <td />
           <td colspan="100">
-            <img
-              v-if="row.poster_path"
-              class="movie-list-details"
-              crossorigin="anonymous"
-              :src="`https://image.tmdb.org/t/p/w500${row.poster_path}`"
-            >
-            <p><em>{{ row.tagline }}</em></p>
-            <p>{{ row.overview }}</p>
-            <p>{{ row.credits?.cast?.slice(0, 5).map(p => p.name).join(', ') }}</p>
+            <div>
+              <img
+                v-if="row.poster_path"
+                class="movie-list-details"
+                crossorigin="anonymous"
+                :src="`https://image.tmdb.org/t/p/w500${row.poster_path}`"
+              >
+              <p><em>{{ row.tagline }}</em></p>
+              <p>{{ row.overview }}</p>
+              <p>{{ row.credits?.cast?.slice(0, 5).map(p => p.name).join(', ') }}</p>
+            </div>
           </td>
         </tr>
       </template>
