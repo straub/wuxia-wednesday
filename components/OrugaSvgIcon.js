@@ -12,6 +12,7 @@ import {
     mdiReload,
     mdiTable,
     mdiArrowUp,
+    mdiChevronRight,
 } from '@mdi/js'
 
 const knownIcons = {
@@ -26,6 +27,7 @@ const knownIcons = {
     mdiReload,
     mdiTable,
     mdiArrowUp,
+    mdiChevronRight,
 }
 
 export default {

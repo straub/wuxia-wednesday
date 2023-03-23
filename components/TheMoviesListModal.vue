@@ -7,6 +7,9 @@
     <OTable
       :data="rows"
       default-sort-direction="desc"
+      detailed
+      show-detail-icon
+      custom-detail-row
     >
       <OTableColumn
         v-for="column in columns"
@@ -25,10 +28,20 @@
           target="_blank"
           title="Open on TMDb"
         >
-          {{ row.title }}
+          {{ row[column.field] }}
         </a>
-        <span v-else>{{ row[column.field] ?? '~' }}</span>
+        <template v-else>{{ row[column.field] ?? '~' }}</template>
       </OTableColumn>
+
+      <template #detail="{ row }">
+        <tr>
+          <td></td>
+          <td colspan="100">
+            <p><em>{{ row.tagline }}</em></p>
+            <p>{{ row.overview }}</p>
+          </td>
+        </tr>
+      </template>
     </OTable>
   </OModal>
 </template>
@@ -63,12 +76,12 @@ const columns = ref([
   },
   {
     field: 'vote_average',
-    label: 'Vote Avg',
+    label: 'User Score',
     sortable: true,
   },
   {
     field: 'vote_count',
-    label: 'Vote Count',
+    label: 'Ratings',
     sortable: true,
   },
   {
