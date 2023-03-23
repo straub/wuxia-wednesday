@@ -4,6 +4,7 @@
     :active="isShowing"
     @update:active="(newValue: boolean) => emit('update:isShowing', newValue)"
   >
+    <h2>{{ movies.length }} {{ movies.length === 1 ? 'movie' : 'movies' }}</h2>
     <OTable
       :data="rows"
       default-sort-direction="desc"
