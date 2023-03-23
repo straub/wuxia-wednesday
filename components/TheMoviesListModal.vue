@@ -18,8 +18,15 @@
           width="32"
           crossorigin="anonymous"
           :src="`https://image.tmdb.org/t/p/w500${row.poster_path}`"
-          @dblclick="openUrl(`https://www.themoviedb.org/${row.id.replace(':', '/')}`)"
         />
+        <a
+          v-else-if="column.field === 'title'"
+          :href="`https://www.themoviedb.org/${row.id.replace(':', '/')}`"
+          target="_blank"
+          title="Open on TMDb"
+        >
+          {{ row.title }}
+        </a>
         <span v-else-if="column.field === 'release_date' && row.release_date">
           {{ row.release_date.split('-')[0] }}
         </span>
