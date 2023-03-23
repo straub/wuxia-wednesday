@@ -8,7 +8,7 @@
       id="cy"
       :style="{ cursor }"
       :title="title"
-    ></div>
+    />
     <TheMovieSearchModal
       v-model:is-searching="isSearching"
       @select="async (movie) => {
@@ -24,115 +24,126 @@
         saveToUrl()
         isSearching = false
       }"
-    ></TheMovieSearchModal>
-    <TheAboutModal v-model:is-showing="isShowingAbout"></TheAboutModal>
-    <TheMoviesListModal v-model:is-showing="isShowingMoviesList" :movies="allMovies"></TheMoviesListModal>
-    <TheLogo v-model:is-glitching="isGlitching"></TheLogo>
+    />
+    <TheAboutModal v-model:is-showing="isShowingAbout" />
+    <TheMoviesListModal v-model:is-showing="isShowingMoviesList" :movies="allMovies" />
+    <TheLogo v-model:is-glitching="isGlitching" />
     <div id="toolbar">
       <div class="attribution">
         Data from&nbsp;<a
           target="_blank"
           href="https://www.themoviedb.org/"
         ><img
-            title="The Movie Database"
-            src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg"
-          />
+          title="The Movie Database"
+          src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg"
+        >
         </a>
       </div>
       <OField>
         <OButton
-          @click="mode = mode === 'fit' ? 'focus' : 'fit'; fitOrFocus()"
           size="small"
           :title="mode === 'fit' ? 'Focus on Highlighted' : 'Fit All'"
           :icon-right="mode === 'fit' ? 'image-filter-center-focus' : 'fit-to-page-outline'"
-        ></OButton>
+          @click="mode = mode === 'fit' ? 'focus' : 'fit'; fitOrFocus()"
+        />
         <OButton
+          size="small"
+          title="Search"
+          icon-right="movie-search-outline"
           @click="isSearching = true"
-          size="small" title="Search" icon-right="movie-search-outline"></OButton>
+        />
         <OButton
+          size="small"
+          title="About"
+          icon-right="information-outline"
           @click="isShowingAbout = true"
-          size="small" title="About" icon-right="information-outline"></OButton>
+        />
         <OButton
+          size="small"
+          title="Reload"
+          icon-right="reload"
           @click="reload()"
-          size="small" title="Reload" icon-right="reload"></OButton>
+        />
         <OButton
+          size="small"
+          title="Movies List"
+          icon-right="table"
           @click="isShowingMoviesList = true"
-          size="small" title="Movies List" icon-right="table"></OButton>
+        />
         <!-- <OButton @click="" size="small" title="Settings" icon-right="cog-outline"></OButton> -->
       </OField>
     </div>
-    <OLoading full-page v-model:active="isLoading"></OLoading>
+    <OLoading v-model:active="isLoading" full-page />
   </div>
 </template>
 
 <script setup>
-import { Buffer } from 'buffer'
-import cytoscape from 'cytoscape'
-import fcose from 'cytoscape-fcose'
-import cola from 'cytoscape-cola'
+import { Buffer } from 'buffer';
+import cytoscape from 'cytoscape';
+import fcose from 'cytoscape-fcose';
+import cola from 'cytoscape-cola';
 import layoutUtilities from 'cytoscape-layout-utilities';
-import { MovieDb } from 'moviedb-promise'
-import { OLoading, OField, OButton } from '@oruga-ui/oruga-next'
-import { gzip, ungzip } from 'pako'
+import { MovieDb } from 'moviedb-promise';
+import { OLoading, OField, OButton } from '@oruga-ui/oruga-next';
+import { gzip, ungzip } from 'pako';
 
-cytoscape.use(fcose)
-cytoscape.use(cola)
-cytoscape.use(layoutUtilities)
+cytoscape.use(fcose);
+cytoscape.use(cola);
+cytoscape.use(layoutUtilities);
 
 /** @type {cytoscape.Core} */
-let cy
+let cy;
 
-const moviedb = new MovieDb('b95ecffb4e929829fbc815288785b66e')
+const moviedb = new MovieDb('b95ecffb4e929829fbc815288785b66e');
 
-const isLoading = ref(true)
-const isSearching = ref(false)
-const isShowingAbout = ref(false)
-const isShowingMoviesList = ref(false)
-const isGlitching = ref(false)
+const isLoading = ref(true);
+const isSearching = ref(false);
+const isShowingAbout = ref(false);
+const isShowingMoviesList = ref(false);
+const isGlitching = ref(false);
 
-const cursor = ref('inherit')
-const title = ref('')
+const cursor = ref('inherit');
+const title = ref('');
 
-const mode = ref('focus')
+const mode = ref('focus');
 
-const allMovies = ref([])
+const allMovies = ref([]);
 
-const padding = 30
+const padding = 30;
 
-const fitOrFocus = () => mode.value === 'fit' ?
-    cy.fit(undefined, padding) :
-    cy.fit(cy.$('node.foreground'), padding)
+const fitOrFocus = () => mode.value === 'fit'
+  ? cy.fit(undefined, padding)
+  : cy.fit(cy.$('node.foreground'), padding);
 
-const reload = () => window.location.href = '/'
+const reload = () => window.location.href = '/';
 
-const fetchMovie = async id => {
-  id = String(id).replace('movie:', '')
+const fetchMovie = async (id) => {
+  id = String(id).replace('movie:', '');
 
-  const movie = await moviedb.movieInfo({ id, append_to_response: 'credits', language: 'en-US' })
-  return movie
-}
+  const movie = await moviedb.movieInfo({ id, append_to_response: 'credits', language: 'en-US' });
+  return movie;
+};
 
-const fetchPerson = async id => {
-  id = String(id).replace('person:', '')
+const fetchPerson = async (id) => {
+  id = String(id).replace('person:', '');
 
-  const person = await moviedb.personInfo({ id, append_to_response: 'movie_credits', language: 'en-US' })
-  return person
-}
+  const person = await moviedb.personInfo({ id, append_to_response: 'movie_credits', language: 'en-US' });
+  return person;
+};
 
-const ELEMENTS_HASH_PREFIX = '#elements:'
+const ELEMENTS_HASH_PREFIX = '#elements:';
 
 const saveToUrl = () => {
   location.hash = `${ELEMENTS_HASH_PREFIX}${Buffer.from(
     gzip(
-      JSON.stringify(cy.elements().jsons())
-    )
-  ).toString('base64')}`
+      JSON.stringify(cy.elements().jsons()),
+    ),
+  ).toString('base64')}`;
 
   allMovies.value = cy.$('.movie').map(ele => ele.data());
 };
 
 onMounted(async () => {
-
   const config = {
     autoungrabify: true,
     // autolock: true,
@@ -160,24 +171,28 @@ onMounted(async () => {
           'text-justification': 'center',
           'text-margin-x': 0,
           'text-margin-y': 0,
-        }
+        },
       },
       {
         selector: 'node.movie',
         style: {
           // label: 'data(title)',
           label: ele => `${
-            !ele.data('poster_path') || ele.data('original_language') !== 'en' ?
-            `${ele.data('title')}\n` :
-            ''
+            !ele.data('poster_path') || ele.data('original_language') !== 'en'
+            ? `${ele.data('title')}\n`
+            : ''
           }${
-            ele.data('release_date') ? `(${
+            ele.data('release_date')
+? `(${
               ele.data('release_date').split('-')[0]
-            }) ` : ''
+            }) `
+: ''
           }${
-            ele.data('vote_count') > 10 ? `${
-              Math.round(ele.data('vote_average')*100/10)
-            }% `: ''
+            ele.data('vote_count') > 10
+? `${
+              Math.round(ele.data('vote_average') * 100 / 10)
+            }% `
+: ''
           }${
             ele.data('runtime') ? `${ele.data('runtime')}m` : ''
           }`,
@@ -187,7 +202,7 @@ onMounted(async () => {
           'z-index': 1,
           shape: 'round-rectangle',
           'background-image': ele => 'https://image.tmdb.org/t/p/w500' + ele.data('poster_path'),
-        }
+        },
       },
       {
         selector: 'node.movie[!poster_path]',
@@ -197,7 +212,7 @@ onMounted(async () => {
           'background-fill': 'solid',
           'background-color': '#333',
           'background-image': null,
-        }
+        },
       },
       {
         selector: 'node.person',
@@ -209,7 +224,7 @@ onMounted(async () => {
           shape: 'ellipse',
           'background-image': ele => 'https://image.tmdb.org/t/p/w185' + ele.data('profile_path'),
           'background-offset-y': '-40%',
-        }
+        },
       },
       {
         selector: 'node.person[!profile_path]',
@@ -218,7 +233,7 @@ onMounted(async () => {
           'background-fill': 'solid',
           'background-color': '#333',
           'background-image': null,
-        }
+        },
       },
       {
         selector: 'node.background',
@@ -226,15 +241,15 @@ onMounted(async () => {
           opacity: 0.4,
           'transition-property': 'opacity',
           'transition-duration': '2s',
-        }
+        },
       },
       {
         selector: 'edge',
         style: {
-          'width': 2,
+          width: 2,
           'line-color': '#333',
           'curve-style': 'straight',
-        }
+        },
       },
       {
         selector: 'edge[billing]',
@@ -245,10 +260,10 @@ onMounted(async () => {
           'min-zoomed-font-size': 20,
           'target-text-offset': 20,
           'target-label': 'data(billing)',
-        }
+        },
       },
     ],
-  }
+  };
 
   cy = cytoscape({
     ...config,
@@ -256,42 +271,41 @@ onMounted(async () => {
   });
 
   const restoreFromUrl = () => {
-    cy.elements().remove()
+    cy.elements().remove();
 
     const elements = JSON.parse(
       ungzip(
         Buffer.from(
           location.hash.replace(ELEMENTS_HASH_PREFIX, ''),
-          'base64'
+          'base64',
         ),
         { to: 'string' },
-      )
-    )
-    console.log({ elements })
+      ),
+    );
+    console.log({ elements });
 
-    cy.add(elements)
+    cy.add(elements);
 
     allMovies.value = cy.$('.movie').map(ele => ele.data());
-  }
+  };
 
   const onHashchange = () => {
-    if (!location.hash) return;
-    restoreFromUrl()
-    fitOrFocus()
-  }
+    if (!location.hash) { return; }
+    restoreFromUrl();
+    fitOrFocus();
+  };
 
   addEventListener('hashchange', onHashchange);
-  onUnmounted(() => removeEventListener('hashchange', onHashchange))
+  onUnmounted(() => removeEventListener('hashchange', onHashchange));
 
   if (location.hash.startsWith(ELEMENTS_HASH_PREFIX)) {
-    restoreFromUrl()
-  }
-  else {
-    const { results: [{ id: mostPopularId }] } = await moviedb.moviePopular()
+    restoreFromUrl();
+  } else {
+    const { results: [{ id: mostPopularId }] } = await moviedb.moviePopular();
 
     console.log({ mostPopularId });
 
-    const initialMovie = await fetchMovie(mostPopularId)
+    const initialMovie = await fetchMovie(mostPopularId);
     // const initialMovie = await fetchMovie(614919)
     // const initialMovie = await fetchMovie(287757)
 
@@ -304,17 +318,17 @@ onMounted(async () => {
         classes: ['movie', 'foreground'],
         pannable: true,
       },
-    ]
+    ];
 
-    cy.add(elements)
+    cy.add(elements);
 
     saveToUrl();
   }
 
-  fitOrFocus()
-  isLoading.value = false
+  fitOrFocus();
+  isLoading.value = false;
 
-  const layoutUtil = cy.layoutUtilities()
+  const layoutUtil = cy.layoutUtilities();
 
   /**
    * @param {cytoscape.NodeSingular} ele
@@ -335,147 +349,155 @@ onMounted(async () => {
       cb();
     },
   })
-  .run()
+    .run();
 
   /**
    * @param {string} id
    * @param {Object} [newData]
    */
   async function expandNode (id, newData = {}) {
-    const type = id.split(':')[0]
-    const otherType = type === 'movie' ? 'person' : 'movie'
-    const ele = cy.getElementById(id)
+    const type = id.split(':')[0];
+    const otherType = type === 'movie' ? 'person' : 'movie';
+    const ele = cy.getElementById(id);
     const {
       name, title, profile_path, poster_path, original_language, release_date, vote_count, vote_average,
       popularity, runtime,
-    } = newData
+    } = newData;
     ele.data({
-      name, title, profile_path, poster_path, original_language, release_date, vote_count, vote_average,
-      popularity, runtime,
+      name,
+      title,
+      profile_path,
+      poster_path,
+      original_language,
+      release_date,
+      vote_count,
+      vote_average,
+      popularity,
+      runtime,
     });
-    console.log({ id, type, newData, ele })
+    console.log({ id, type, newData, ele });
 
     const currentPage = ele.data('currentPage') ?? 0;
-    ele.data('currentPage', currentPage + 1)
+    ele.data('currentPage', currentPage + 1);
 
     const credits = [
       ...(newData.credits ?? newData.movie_credits).cast,
       // ...(newData.credits ?? newData.movie_credits).crew,
-    ]
+    ];
 
     const newNodes = credits
     // .filter(credit => cy.getElementById(`movie:${credit.id}`).length === 0)
     // .sort((a, b) => b.vote_average - a.vote_average)
-    .sort((a, b) => b.popularity - a.popularity)
-    .slice(currentPage * 10, (currentPage + 1) * 10)
-    .map(credit => {
-      return [
-        {
-          group: 'nodes',
-          data: { ...credit, id: `${otherType}:${credit.id}` },
-          classes: [otherType],
-          // position: { ...ele.position() },
-          pannable: true,
-        },
-      ]
-    })
-    .flat()
+      .sort((a, b) => b.popularity - a.popularity)
+      .slice(currentPage * 10, (currentPage + 1) * 10)
+      .map((credit) => {
+        return [
+          {
+            group: 'nodes',
+            data: { ...credit, id: `${otherType}:${credit.id}` },
+            classes: [otherType],
+            // position: { ...ele.position() },
+            pannable: true,
+          },
+        ];
+      })
+      .flat();
 
     if (type === 'person') {
       // Fetch additional data on new movies
       await Promise.all(
         newNodes.map(async (node) => {
-          const movie = await fetchMovie(node.data.id.replace('movie:', ''))
+          const movie = await fetchMovie(node.data.id.replace('movie:', ''));
 
           node.data = {
             ...movie,
             ...node.data,
-          }
-        })
-      )
+          };
+        }),
+      );
     }
 
     const allEdges = credits
-    .map(credit => {
-      const movie = type === 'movie' ? newData : credit;
-      const person = type === 'person' ? newData : credit;
+      .map((credit) => {
+        const movie = type === 'movie' ? newData : credit;
+        const person = type === 'person' ? newData : credit;
 
-      return [
-        {
-          group: 'edges',
-          data: {
-            id: `movie:${movie.id}-person:${person.id}`,
-            source: `movie:${movie.id}`,
-            target: `person:${person.id}`,
-            billing: !isNaN(credit.order) ? `#${credit.order + 1}` : credit.job,
-          }
-        },
-      ]
-    })
-    .flat()
+        return [
+          {
+            group: 'edges',
+            data: {
+              id: `movie:${movie.id}-person:${person.id}`,
+              source: `movie:${movie.id}`,
+              target: `person:${person.id}`,
+              billing: !isNaN(credit.order) ? `#${credit.order + 1}` : credit.job,
+            },
+          },
+        ];
+      })
+      .flat();
 
     layoutUtil.placeNewNodes(
-      cy.add(newNodes)
-    )
+      cy.add(newNodes),
+    );
 
     const allValidEdges = allEdges
-    .filter(edge => cy.$id(edge.data.source).size() && cy.$id(edge.data.target).size())
+      .filter(edge => cy.$id(edge.data.source).size() && cy.$id(edge.data.target).size());
 
-    cy.add(allValidEdges)
+    cy.add(allValidEdges);
 
-    cy.nodes().addClass('background').removeClass('foreground')
-    const neighborhood = ele.closedNeighborhood()
-    neighborhood.removeClass('background').addClass('foreground')
+    cy.nodes().addClass('background').removeClass('foreground');
+    const neighborhood = ele.closedNeighborhood();
+    neighborhood.removeClass('background').addClass('foreground');
 
-    cy.animate({ center: { eles: ele } })
+    cy.animate({ center: { eles: ele } });
 
-    if (newNodes.length) runLayout(
-      ele,
-      () => cy.animate({ fit: { eles: mode.value === 'focus' ? neighborhood : undefined, padding } })
-    )
+    if (newNodes.length) {
+      runLayout(
+        ele,
+        () => cy.animate({ fit: { eles: mode.value === 'focus' ? neighborhood : undefined, padding } }),
+      );
+    }
   }
 
   cy
-  .on('onetap', 'node', async (evt) => {
-    const node = evt.target;
-    const id = node.id()
-    console.log( 'onetapped ' + id );
+    .on('onetap', 'node', async (evt) => {
+      const node = evt.target;
+      const id = node.id();
+      console.log('onetapped ' + id);
 
-    try {
-      isLoading.value = true
+      try {
+        isLoading.value = true;
 
-      if (id.startsWith('movie:')) {
-        const movie = await fetchMovie(id)
-        await expandNode(id, movie)
+        if (id.startsWith('movie:')) {
+          const movie = await fetchMovie(id);
+          await expandNode(id, movie);
+        } else if (id.startsWith('person:')) {
+          const person = await fetchPerson(id);
+          await expandNode(id, person);
+        }
+      } finally {
+        isLoading.value = false;
       }
-      else if (id.startsWith('person:')) {
-        const person = await fetchPerson(id)
-        await expandNode(id, person)
-      }
-    }
-    finally {
-      isLoading.value = false
-    }
-  })
-  .on('dbltap', 'node', async (evt) => {
-    const node = evt.target;
-    const id = node.id()
-    console.log( 'dbltapped ' + id );
+    })
+    .on('dbltap', 'node', async (evt) => {
+      const node = evt.target;
+      const id = node.id();
+      console.log('dbltapped ' + id);
 
-    if (id.startsWith('movie:') || id.startsWith('person:')) {
-      window.open(`https://www.themoviedb.org/${id.replace(':', '/')}`)
-    }
-  })
-  .on('mouseover', 'node', (evt) => {
-    const node = evt.target;
-    cursor.value = 'pointer'
-    title.value = node.data('title') ?? ''
-  })
-  .on('mouseout', 'node', () => {
-    cursor.value = 'inherit'
-    title.value = ''
-  })
-})
+      if (id.startsWith('movie:') || id.startsWith('person:')) {
+        window.open(`https://www.themoviedb.org/${id.replace(':', '/')}`);
+      }
+    })
+    .on('mouseover', 'node', (evt) => {
+      const node = evt.target;
+      cursor.value = 'pointer';
+      title.value = node.data('title') ?? '';
+    })
+    .on('mouseout', 'node', () => {
+      cursor.value = 'inherit';
+      title.value = '';
+    });
+});
 </script>
 
 <style lang="scss">
@@ -503,7 +525,7 @@ html,
 body {
   margin: 0px;
   height: 100%;
-  
+
   background-color: #000;
   text-shadow: #888 0 0 1rem;
   color: #fff;

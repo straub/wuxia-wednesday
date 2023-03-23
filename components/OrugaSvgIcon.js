@@ -1,74 +1,74 @@
 
-import { h, computed } from 'vue'
+import { h, computed } from 'vue';
 import {
-    mdiClose,
-    mdiLoading,
-    mdiFitToPageOutline,
-    mdiImageFilterCenterFocus,
-    mdiMovieSearchOutline,
-    mdiContentSaveOutline,
-    mdiInformationOutline,
-    mdiCogOutline,
-    mdiReload,
-    mdiTable,
-    mdiArrowUp,
-    mdiChevronRight,
-} from '@mdi/js'
+  mdiClose,
+  mdiLoading,
+  mdiFitToPageOutline,
+  mdiImageFilterCenterFocus,
+  mdiMovieSearchOutline,
+  mdiContentSaveOutline,
+  mdiInformationOutline,
+  mdiCogOutline,
+  mdiReload,
+  mdiTable,
+  mdiArrowUp,
+  mdiChevronRight,
+} from '@mdi/js';
 
 const knownIcons = {
-    mdiClose,
-    mdiLoading,
-    mdiFitToPageOutline,
-    mdiImageFilterCenterFocus,
-    mdiMovieSearchOutline,
-    mdiContentSaveOutline,
-    mdiInformationOutline,
-    mdiCogOutline,
-    mdiReload,
-    mdiTable,
-    mdiArrowUp,
-    mdiChevronRight,
-}
+  mdiClose,
+  mdiLoading,
+  mdiFitToPageOutline,
+  mdiImageFilterCenterFocus,
+  mdiMovieSearchOutline,
+  mdiContentSaveOutline,
+  mdiInformationOutline,
+  mdiCogOutline,
+  mdiReload,
+  mdiTable,
+  mdiArrowUp,
+  mdiChevronRight,
+};
 
 export default {
-    props: {
-        icon: Array,
-        size: {
-            type: [Number, String],
-            default: 24
-        },
+  props: {
+    icon: Array,
+    size: {
+      type: [Number, String],
+      default: 24,
     },
-    setup (props) {
-        console.log({ props })
+  },
+  setup (props) {
+    console.log({ props });
 
-        const path = computed(() => {
-            const [, iconName] = props.icon
-            
-            // Convert kebab-case to camelCase
-            const iconKey = iconName.replace(/-./g, y => y[1].toUpperCase());
-            if (knownIcons[iconKey]) {
-                return knownIcons[iconKey];
-            }
+    const path = computed(() => {
+      const [, iconName] = props.icon;
 
-            console.warn('unknown icon', iconKey)
-        })
+      // Convert kebab-case to camelCase
+      const iconKey = iconName.replace(/-./g, y => y[1].toUpperCase());
+      if (knownIcons[iconKey]) {
+        return knownIcons[iconKey];
+      }
 
-        const sizeNumber = computed(() => Number(String(props.size || 24).replace(/(mdi-|px)/g, '')))
+      console.warn('unknown icon', iconKey);
+    });
 
-        return () => {
-            return h(
-                'svg',
-                {
-                    class: 'icon',
-                    width: sizeNumber.value,
-                    height: sizeNumber.value,
-                    viewBox: '0 0 24 24',
-                    'aria-hidden': true,
-                },
-                [
-                    h('path', { d: path.value, fill: 'currentColor' }),
-                ]
-            )
-        }
-    }
-}
+    const sizeNumber = computed(() => Number(String(props.size || 24).replace(/(mdi-|px)/g, '')));
+
+    return () => {
+      return h(
+        'svg',
+        {
+          class: 'icon',
+          width: sizeNumber.value,
+          height: sizeNumber.value,
+          viewBox: '0 0 24 24',
+          'aria-hidden': true,
+        },
+        [
+          h('path', { d: path.value, fill: 'currentColor' }),
+        ],
+      );
+    };
+  },
+};

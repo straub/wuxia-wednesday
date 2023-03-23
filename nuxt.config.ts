@@ -10,16 +10,16 @@ export default defineNuxtConfig({
         protocol: 'wss',
         clientPort: 443,
         path: 'hmr/',
-      }
-    }
+      },
+    },
   },
   app: {
     head: {
       title: 'Wuxia Wednesday',
       meta: [
         { name: 'description', content: 'Movie graph explorer' },
-      ]
-    }
+      ],
+    },
   },
   sourcemap: true,
-})
+});

@@ -13,15 +13,15 @@
     >
       <OTableColumn
         v-for="column in columns"
+        v-slot="{ row }"
         v-bind="column"
-        #default="{ row }"
       >
         <img
           v-if="column.field == 'poster' && row.poster_path"
           width="32"
           crossorigin="anonymous"
           :src="`https://image.tmdb.org/t/p/w500${row.poster_path}`"
-        />
+        >
         <a
           v-else-if="column.field === 'title'"
           :href="`https://www.themoviedb.org/${row.id.replace(':', '/')}`"
@@ -36,19 +36,21 @@
         <template v-else-if="column.numeric">
           {{ numberFormatter.format(row[column.field]) }}
         </template>
-        <template v-else>{{ row[column.field] ?? '~' }}</template>
+        <template v-else>
+          {{ row[column.field] ?? '~' }}
+        </template>
       </OTableColumn>
 
       <template #detail="{ row }">
         <tr>
-          <td></td>
+          <td />
           <td colspan="100">
             <img
               v-if="row.poster_path"
               class="movie-list-details"
               crossorigin="anonymous"
               :src="`https://image.tmdb.org/t/p/w500${row.poster_path}`"
-            />
+            >
             <p><em>{{ row.tagline }}</em></p>
             <p>{{ row.overview }}</p>
             <p>{{ row.credits?.cast?.slice(0, 5).map(p => p.name).join(', ') }}</p>
@@ -60,15 +62,15 @@
 </template>
 
 <script setup lang="ts">
-import { MovieResponse, CreditsResponse } from 'moviedb-promise/dist/request-types'
-import { OModal, OTable, OTableColumn } from '@oruga-ui/oruga-next'
+import { MovieResponse, CreditsResponse } from 'moviedb-promise/dist/request-types';
+import { OModal, OTable, OTableColumn } from '@oruga-ui/oruga-next';
 
 type ExtendedMovieResponse = MovieResponse & { credits: CreditsResponse }
 
 const props = defineProps<{
   isShowing: Boolean,
   movies: ExtendedMovieResponse[],
-}>()
+}>();
 
 const emit = defineEmits(['update:isShowing']);
 
@@ -117,15 +119,15 @@ const columns = ref([
   },
 ]);
 
-const numberFormatter = new Intl.NumberFormat()
+const numberFormatter = new Intl.NumberFormat();
 
 const rows = computed(() => props.movies.map((movie: ExtendedMovieResponse) => ({
   ...movie,
   release_year: movie.release_date?.split('-')[0],
-  vote_average: movie.vote_average && `${Math.round(movie.vote_average*100/10)}%`,
+  vote_average: movie.vote_average && `${Math.round(movie.vote_average * 100 / 10)}%`,
   popularity: movie.popularity && Math.round(movie.popularity),
   cast_num: movie.credits?.cast?.length,
-})))
+})));
 </script>
 
 <style lang="scss">

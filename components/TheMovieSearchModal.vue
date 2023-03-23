@@ -6,6 +6,7 @@
   >
     <OField label="Find a movie" label-size="large">
       <OAutocomplete
+        ref="input"
         :data="data"
         placeholder="e.g. The Werewolf Game: Inferno"
         field="title"
@@ -14,23 +15,22 @@
         check-infinite-scroll
         keep-first
         :debounce-typing="500"
-        ref="input"
         @typing="getAsyncData"
         @select="(movie: MovieResult) => emit('select', movie)"
         @infinite-scroll="getMoreAsyncData"
       >
         <template #default="{ option: movie }">
           <div class="media">
-            <div class="media-left" v-if="movie.poster_path">
+            <div v-if="movie.poster_path" class="media-left">
               <img
                 width="32"
                 crossorigin="anonymous"
                 :src="`https://image.tmdb.org/t/p/w342${movie.poster_path}`"
-              />
+              >
             </div>
             <div class="media-content">
               {{ movie.title }}
-              <br />
+              <br>
               <small v-if="movie.release_date">
                 ({{ movie.release_date.split('-')[0] }})
               </small>
@@ -40,7 +40,7 @@
             </div>
           </div>
         </template>
-        <template #footer v-if="page > totalPages">
+        <template v-if="page > totalPages" #footer>
           <span class="ex-text-grey">
             Thats it! No more movies found.
           </span>
@@ -51,21 +51,21 @@
 </template>
 
 <script setup lang="ts">
-import { MovieDb } from 'moviedb-promise'
-import { MovieResult } from 'moviedb-promise/dist/request-types'
-import { OModal, OField, OAutocomplete } from '@oruga-ui/oruga-next'
+import { MovieDb } from 'moviedb-promise';
+import { MovieResult } from 'moviedb-promise/dist/request-types';
+import { OModal, OField, OAutocomplete } from '@oruga-ui/oruga-next';
 
-const moviedb = new MovieDb('b95ecffb4e929829fbc815288785b66e')
+const moviedb = new MovieDb('b95ecffb4e929829fbc815288785b66e');
 
 const props = defineProps({
   isSearching: Boolean,
-})
+});
 
-const emit = defineEmits(['update:isSearching', 'select'])
+const emit = defineEmits(['update:isSearching', 'select']);
 
-const input = ref<HTMLInputElement>()
+const input = ref<HTMLInputElement>();
 
-watch(() => props.isSearching, () => nextTick(() => input.value?.focus()))
+watch(() => props.isSearching, () => nextTick(() => input.value?.focus()));
 
 const isFetching = ref(false);
 const page = ref(1);
@@ -74,7 +74,7 @@ const totalPages = ref(1);
 const data = ref<MovieResult[]>([]);
 const name = ref('');
 
-async function getAsyncData(_name: string) {
+async function getAsyncData (_name: string) {
   if (name.value !== _name) {
     name.value = _name;
     data.value = [];
@@ -101,19 +101,19 @@ async function getAsyncData(_name: string) {
     const _data = await moviedb.searchMovie({
       query: _name,
       page: page.value,
-    })
+    });
 
     data.value = [...data.value, ...(_data.results ?? [])];
     page.value += 1;
     totalPages.value = _data.total_pages ?? 0;
-  } catch(error) {
+  } catch (error) {
     throw error;
   } finally {
     isFetching.value = false;
   }
 }
 
-function getMoreAsyncData() {
+function getMoreAsyncData () {
   getAsyncData(name.value);
 }
 </script>

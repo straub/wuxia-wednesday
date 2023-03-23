@@ -10,14 +10,14 @@
 <script setup lang="ts">
 const props = defineProps({
   isGlitching: Boolean,
-})
-const emit = defineEmits(['update:isGlitching'])
+});
+const emit = defineEmits(['update:isGlitching']);
 
 watch(() => props.isGlitching, (newValue) => {
   if (newValue) {
-    setTimeout(() => emit('update:isGlitching', false), 1000 + 2000 * Math.random())
+    setTimeout(() => emit('update:isGlitching', false), 1000 + 2000 * Math.random());
   }
-})
+});
 </script>
 
 <style lang="scss">
@@ -58,7 +58,7 @@ h1 {
   color:white;
   background:black;
   overflow:hidden;
-  clip:rect(0,900px,0,0); 
+  clip:rect(0,900px,0,0);
   animation:noise-anim 2s infinite linear alternate-reverse;
 }
 
@@ -74,12 +74,12 @@ h1 {
   content:attr(data-text);
   position:absolute;
   left:-2px;
-  text-shadow:1px 0 blue; 
+  text-shadow:1px 0 blue;
   top:0;
   color:white;
   background:black;
   overflow:hidden;
-  clip:rect(0,900px,0,0); 
+  clip:rect(0,900px,0,0);
   animation:noise-anim-2 3s infinite linear alternate-reverse;
 }
 </style>
