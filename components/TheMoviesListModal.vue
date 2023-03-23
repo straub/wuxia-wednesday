@@ -43,6 +43,12 @@
         <tr>
           <td></td>
           <td colspan="100">
+            <img
+              v-if="row.poster_path"
+              class="movie-list-details"
+              crossorigin="anonymous"
+              :src="`https://image.tmdb.org/t/p/w500${row.poster_path}`"
+            />
             <p><em>{{ row.tagline }}</em></p>
             <p>{{ row.overview }}</p>
             <p>{{ row.credits?.cast?.slice(0, 5).map(p => p.name).join(', ') }}</p>
@@ -125,5 +131,12 @@ const rows = computed(() => props.movies.map((movie: ExtendedMovieResponse) => (
 <style lang="scss">
 .modal-movies-list .o-modal__content {
   width: 70vw;
+}
+.modal-movies-list .movie-list-details {
+  margin-right: 1rem;
+  margin-bottom: 1rem;
+  margin-top: 1rem;
+  float: left;
+  width: 20%;
 }
 </style>
