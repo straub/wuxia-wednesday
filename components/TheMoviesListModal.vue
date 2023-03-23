@@ -45,7 +45,7 @@
           <td colspan="100">
             <p><em>{{ row.tagline }}</em></p>
             <p>{{ row.overview }}</p>
-            <p>{{ row.credits?.cast.slice(0, 5).map(p => p.name).join(', ') }}</p>
+            <p>{{ row.credits?.cast?.slice(0, 5).map(p => p.name).join(', ') }}</p>
           </td>
         </tr>
       </template>
@@ -118,7 +118,7 @@ const rows = computed(() => props.movies.map((movie: ExtendedMovieResponse) => (
   release_year: movie.release_date?.split('-')[0],
   vote_average: movie.vote_average && `${Math.round(movie.vote_average*100/10)}%`,
   popularity: movie.popularity && Math.round(movie.popularity),
-  cast_num: movie.credits.cast?.length,
+  cast_num: movie.credits?.cast?.length,
 })))
 </script>
 
