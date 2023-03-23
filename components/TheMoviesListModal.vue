@@ -45,7 +45,7 @@
           <td colspan="100">
             <p><em>{{ row.tagline }}</em></p>
             <p>{{ row.overview }}</p>
-            <p>{{ row?.credits.cast.slice(0, 5).map(p => p.name).join(', ') }}</p>
+            <p>{{ row.credits?.cast.slice(0, 5).map(p => p.name).join(', ') }}</p>
           </td>
         </tr>
       </template>
