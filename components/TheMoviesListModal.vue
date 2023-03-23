@@ -30,6 +30,12 @@
         >
           {{ row[column.field] }}
         </a>
+        <template v-else-if="column.field === 'runtime'">
+          {{ row[column.field] }}m
+        </template>
+        <template v-else-if="column.numeric">
+          {{ numberFormatter.format(row[column.field]) }}
+        </template>
         <template v-else>{{ row[column.field] ?? '~' }}</template>
       </OTableColumn>
 
@@ -39,6 +45,7 @@
           <td colspan="100">
             <p><em>{{ row.tagline }}</em></p>
             <p>{{ row.overview }}</p>
+            <p>{{ row?.credits.cast.slice(0, 5).map(p => p.name).join(', ') }}</p>
           </td>
         </tr>
       </template>
@@ -83,11 +90,13 @@ const columns = ref([
     field: 'vote_count',
     label: 'Ratings',
     sortable: true,
+    numeric: true,
   },
   {
     field: 'popularity',
     label: 'Popularity',
     sortable: true,
+    numeric: true,
   },
   {
     field: 'runtime',
@@ -98,14 +107,17 @@ const columns = ref([
     field: 'cast_num',
     label: 'Cast',
     sortable: true,
+    numeric: true,
   },
 ]);
+
+const numberFormatter = new Intl.NumberFormat()
 
 const rows = computed(() => props.movies.map((movie: ExtendedMovieResponse) => ({
   ...movie,
   release_year: movie.release_date?.split('-')[0],
   vote_average: movie.vote_average && `${Math.round(movie.vote_average*100/10)}%`,
-  runtime: movie.runtime && `${movie.runtime}m`,
+  popularity: movie.popularity && Math.round(movie.popularity),
   cast_num: movie.credits.cast?.length,
 })))
 </script>

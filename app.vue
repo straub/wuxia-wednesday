@@ -494,8 +494,6 @@ onMounted(async () => {
   $table-color: #fff,
   $table-th-color: #bbb,
   $table-detail-chevron-color: #bbb,
-  $table-detail-background: #111,
-  $table-detail-box-shadow: 0,
 );
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400&display=swap');
 
