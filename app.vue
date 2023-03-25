@@ -222,6 +222,7 @@ onMounted(async () => {
           height: 45,
           'z-index': 2,
           shape: 'ellipse',
+          'underlay-shape': 'ellipse',
           'background-image': ele => 'https://image.tmdb.org/t/p/w185' + ele.data('profile_path'),
           'background-offset-y': '-40%',
         },
@@ -236,9 +237,17 @@ onMounted(async () => {
         },
       },
       {
+        selector: 'node.foreground',
+        style: {
+          'underlay-color': '#eee',
+          'underlay-padding': '1px',
+          'underlay-opacity': 1.0,
+        },
+      },
+      {
         selector: 'node.background',
         style: {
-          opacity: 0.4,
+          opacity: 0.9,
           'transition-property': 'opacity',
           'transition-duration': '2s',
         },
