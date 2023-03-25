@@ -14,6 +14,7 @@
     >
       <OTableColumn
         v-for="column in columns"
+        :key="column.field"
         v-slot="{ row }"
         v-bind="column"
       >

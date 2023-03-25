@@ -39,8 +39,6 @@ export default {
     },
   },
   setup (props) {
-    console.log({ props });
-
     const path = computed(() => {
       const [, iconName] = props.icon;
 
@@ -51,6 +49,7 @@ export default {
       }
 
       console.warn('unknown icon', iconKey);
+      return '';
     });
 
     const sizeNumber = computed(() => Number(String(props.size || 24).replace(/(mdi-|px)/g, '')));

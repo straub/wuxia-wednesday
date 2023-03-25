@@ -115,7 +115,7 @@ const fitOrFocus = () => mode.value === 'fit'
   ? cy.fit(undefined, padding)
   : cy.fit(cy.$('node.foreground'), padding);
 
-const reload = () => window.location.href = '/';
+const reload = () => { window.location.href = '/'; };
 
 const fetchMovie = async (id) => {
   id = String(id).replace('movie:', '');
@@ -479,7 +479,7 @@ onMounted(async () => {
         isLoading.value = false;
       }
     })
-    .on('dbltap', 'node', async (evt) => {
+    .on('dbltap', 'node', (evt) => {
       const node = evt.target;
       const id = node.id();
       console.log('dbltapped ' + id);
