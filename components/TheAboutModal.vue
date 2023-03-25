@@ -7,7 +7,7 @@
     <h2>About</h2>
     <p>
       This site is a movie graph explorer.
-      You can navigate between movies connected by their shared cast and crew members.
+      You can navigate between movies connected by their shared cast members.
     </p>
     <h3>How to Use</h3>
     <ul>
@@ -17,6 +17,7 @@
       <li>Click and drag to pan the graph, scroll or pinch to zoom.</li>
       <li>Click "<OIcon title="Fit All" icon="fit-to-page-outline" size="small" />" to fit the whole graph within the viewport.</li>
       <li>Click "<OIcon title="Focus on Highlighted" icon="image-filter-center-focus" size="small" />" to fit only the currently highlighted nodes within the viewport.</li>
+      <li>Click "<OIcon title="Movies List" icon="table" size="small" />" to view all the movies in the graph as a sortable table.</li>
     </ul>
     <h3>Credits</h3>
     <p>
