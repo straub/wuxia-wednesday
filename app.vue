@@ -54,6 +54,12 @@
         />
         <OButton
           size="small"
+          title="Movies List"
+          icon-right="table"
+          @click="isShowingMoviesList = true"
+        />
+        <OButton
+          size="small"
           title="About"
           icon-right="information-outline"
           @click="isShowingAbout = true"
@@ -63,12 +69,6 @@
           title="Reload"
           icon-right="reload"
           @click="reload()"
-        />
-        <OButton
-          size="small"
-          title="Movies List"
-          icon-right="table"
-          @click="isShowingMoviesList = true"
         />
         <!-- <OButton @click="" size="small" title="Settings" icon-right="cog-outline"></OButton> -->
       </OField>
