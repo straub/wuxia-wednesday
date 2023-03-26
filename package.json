@@ -12,7 +12,7 @@
     "@mdi/js": "7.2.96",
     "@nuxtjs/eslint-config-typescript": "12.0.0",
     "@oruga-ui/oruga-next": "0.5.10",
-    "@oruga-ui/theme-bulma": "0.2.8",
+    "@oruga-ui/theme-bulma": "0.2.9",
     "@types/cytoscape": "3.19.9",
     "cytoscape": "3.23.0",
     "cytoscape-cola": "2.5.1",
