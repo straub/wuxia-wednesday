@@ -66,9 +66,9 @@
         />
         <OButton
           size="small"
-          title="Reload"
-          icon-right="reload"
-          @click="reload()"
+          title="Restart"
+          icon-right="restart"
+          @click="restart()"
         />
         <!-- <OButton @click="" size="small" title="Settings" icon-right="cog-outline"></OButton> -->
       </OField>
@@ -115,7 +115,7 @@ const fitOrFocus = () => mode.value === 'fit'
   ? cy.fit(undefined, padding)
   : cy.fit(cy.$('node.foreground'), padding);
 
-const reload = () => { window.location.href = '/'; };
+const restart = () => { window.location.href = '/'; };
 
 const fetchMovie = async (id) => {
   id = String(id).replace('movie:', '');
