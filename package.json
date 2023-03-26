@@ -19,7 +19,7 @@
     "cytoscape-fcose": "2.1.0",
     "cytoscape-layout-utilities": "1.1.1",
     "moviedb-promise": "3.3.1",
-    "nuxt": "3.0.0",
+    "nuxt": "3.3.2",
     "pako": "2.1.0",
     "sass": "1.56.1"
   }
