@@ -2,6 +2,7 @@
   <OModal
     class="modal-movies-list"
     :active="isShowing"
+    width="100%"
     @update:active="(newValue: boolean) => emit('update:isShowing', newValue)"
   >
     <h2>{{ movies.length }} {{ movies.length === 1 ? 'movie' : 'movies' }}</h2>

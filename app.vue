@@ -395,6 +395,7 @@ onMounted(async () => {
         if (credit.vote_count !== undefined) {
           include &&= credit.vote_count >= 50;
         }
+        // FIXME: credits movies don't have `runtime`
         if (credit.runtime !== undefined) {
           include &&= credit.runtime >= 45;
         }
