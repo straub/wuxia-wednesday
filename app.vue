@@ -98,12 +98,14 @@ import cytoscape from 'cytoscape';
 import fcose from 'cytoscape-fcose';
 import cola from 'cytoscape-cola';
 import layoutUtilities from 'cytoscape-layout-utilities';
+import cxtmenu from 'cytoscape-cxtmenu';
 import { MovieDb } from 'moviedb-promise';
 import { OLoading, OField, OButton } from '@oruga-ui/oruga-next';
 
 cytoscape.use(fcose);
 cytoscape.use(cola);
 cytoscape.use(layoutUtilities);
+cytoscape.use(cxtmenu);
 
 /** @type {cytoscape.Core} */
 let cy;
@@ -346,6 +348,22 @@ onMounted(async () => {
   isLoading.value = false;
 
   const layoutUtil = cy.layoutUtilities();
+
+  cy.cxtmenu({
+    commands: [ // an array of commands to list in the menu or a function that returns the array
+      { // example command
+        content: 'Prune', // html/text content to be displayed in the menu
+        select: function (ele) { // a function to execute when the command is selected
+          console.log('selected for prune', ele.id()); // `ele` holds the reference to the active element
+          ele.remove();
+          saveState();
+        },
+        hover: function (ele) { // a function to execute when the command is hovered
+          console.log(ele.id()); // `ele` holds the reference to the active element
+        },
+      },
+    ],
+  });
 
   /**
    * @param {cytoscape.NodeSingular} ele
