@@ -13,6 +13,7 @@ import {
   mdiTable,
   mdiArrowUp,
   mdiChevronRight,
+  mdiAutoMode,
 } from '@mdi/js';
 
 const knownIcons = {
@@ -28,6 +29,7 @@ const knownIcons = {
   mdiTable,
   mdiArrowUp,
   mdiChevronRight,
+  mdiAutoMode,
 };
 
 export default {

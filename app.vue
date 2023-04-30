@@ -21,12 +21,18 @@
           pannable: true,
         }])
         cy.fit(ele, padding)
-        saveToUrl()
+        saveState()
         isSearching = false
       }"
     />
     <TheAboutModal v-model:is-showing="isShowingAbout" />
-    <TheMoviesListModal v-model:is-showing="isShowingMoviesList" :movies="allMovies" />
+    <TheMoviesListModal
+      v-model:is-showing="isShowingMoviesList"
+      :movies="allMovies"
+      @focus="async (id) => {
+        cy.fit(cy.$id(id), padding);
+      }"
+    />
     <TheLogo v-model:is-glitching="isGlitching" />
     <div id="toolbar">
       <div class="attribution">
@@ -60,6 +66,13 @@
         />
         <OButton
           size="small"
+          title="Auto Mode"
+          icon-right="auto-mode"
+          :class="{ isAutoModeRunning }"
+          @click="isAutoModeRunning = !isAutoModeRunning"
+        />
+        <OButton
+          size="small"
           title="About"
           icon-right="information-outline"
           @click="isShowingAbout = true"
@@ -73,19 +86,20 @@
         <!-- <OButton @click="" size="small" title="Settings" icon-right="cog-outline"></OButton> -->
       </OField>
     </div>
-    <OLoading v-model:active="isLoading" full-page />
+    <OLoading
+      v-model:active="isLoading"
+      full-page
+    />
   </div>
 </template>
 
 <script setup>
-import { Buffer } from 'buffer';
 import cytoscape from 'cytoscape';
 import fcose from 'cytoscape-fcose';
 import cola from 'cytoscape-cola';
 import layoutUtilities from 'cytoscape-layout-utilities';
 import { MovieDb } from 'moviedb-promise';
 import { OLoading, OField, OButton } from '@oruga-ui/oruga-next';
-import { gzip, ungzip } from 'pako';
 
 cytoscape.use(fcose);
 cytoscape.use(cola);
@@ -101,6 +115,7 @@ const isSearching = ref(false);
 const isShowingAbout = ref(false);
 const isShowingMoviesList = ref(false);
 const isGlitching = ref(false);
+const isAutoModeRunning = ref(false);
 
 const cursor = ref('inherit');
 const title = ref('');
@@ -131,16 +146,16 @@ const fetchPerson = async (id) => {
   return person;
 };
 
-const ELEMENTS_HASH_PREFIX = '#elements:';
-
-const saveToUrl = () => {
-  location.hash = `${ELEMENTS_HASH_PREFIX}${Buffer.from(
-    gzip(
-      JSON.stringify(cy.elements().jsons()),
-    ),
-  ).toString('base64')}`;
-
+const saveState = () => {
   allMovies.value = cy.$('.movie').map(ele => ele.data());
+
+  if (isAutoModeRunning.value) { return; }
+
+  const elements = cy.elements().jsons();
+
+  console.log('saving', { elements });
+
+  history.pushState({ elements }, '', new URL(location));
 };
 
 onMounted(async () => {
@@ -183,16 +198,16 @@ onMounted(async () => {
             : ''
           }${
             ele.data('release_date')
-? `(${
+            ? `(${
               ele.data('release_date').split('-')[0]
             }) `
-: ''
+            : ''
           }${
             ele.data('vote_count') > 10
-? `${
+            ? `${
               Math.round(ele.data('vote_average') * 100 / 10)
             }% `
-: ''
+            : ''
           }${
             ele.data('runtime') ? `${ele.data('runtime')}m` : ''
           }`,
@@ -279,36 +294,29 @@ onMounted(async () => {
     container: document.getElementById('cy'),
   });
 
-  const restoreFromUrl = () => {
+  const restoreState = ({ elements }) => {
+    if (!elements?.length) { return; }
+
     cy.elements().remove();
 
-    const elements = JSON.parse(
-      ungzip(
-        Buffer.from(
-          location.hash.replace(ELEMENTS_HASH_PREFIX, ''),
-          'base64',
-        ),
-        { to: 'string' },
-      ),
-    );
-    console.log({ elements });
+    console.log('restoring', { elements });
 
     cy.add(elements);
 
     allMovies.value = cy.$('.movie').map(ele => ele.data());
   };
 
-  const onHashchange = () => {
-    if (!location.hash) { return; }
-    restoreFromUrl();
+  const onPopstate = ({ state }) => {
+    if (!state) { return; }
+    restoreState(state);
     fitOrFocus();
   };
 
-  addEventListener('hashchange', onHashchange);
-  onUnmounted(() => removeEventListener('hashchange', onHashchange));
+  addEventListener('popstate', onPopstate);
+  onUnmounted(() => removeEventListener('popstate', onPopstate));
 
-  if (location.hash.startsWith(ELEMENTS_HASH_PREFIX)) {
-    restoreFromUrl();
+  if (history.state?.elements?.length > 0) {
+    restoreState(history.state);
   } else {
     const { results: [{ id: mostPopularId }] } = await moviedb.moviePopular();
 
@@ -331,7 +339,7 @@ onMounted(async () => {
 
     cy.add(elements);
 
-    saveToUrl();
+    saveState();
   }
 
   fitOrFocus();
@@ -354,7 +362,7 @@ onMounted(async () => {
     padding,
     fixedNodeConstraint: ele ? [{ nodeId: ele.id(), position: ele.position() }] : [],
     stop: () => {
-      saveToUrl();
+      saveState();
       cb();
     },
   })
@@ -461,12 +469,34 @@ onMounted(async () => {
     cy.animate({ center: { eles: ele } });
 
     if (newNodes.length) {
-      runLayout(
-        ele,
-        () => cy.animate({ fit: { eles: mode.value === 'focus' ? neighborhood : undefined, padding } }),
-      );
+      await new Promise((resolve) => {
+        runLayout(
+          ele,
+          () => cy.animate({
+            fit: { eles: mode.value === 'focus' ? neighborhood : undefined, padding },
+            complete: resolve,
+          }),
+        );
+      });
     }
   }
+
+  watch(isAutoModeRunning, () => {
+    if (isAutoModeRunning.value) {
+      async function expandPersonNodes () {
+        for (const node of cy.$('.person')) {
+          if (!isAutoModeRunning.value) { break; }
+
+          const id = node.id();
+
+          const person = await fetchPerson(id);
+          await expandNode(id, person);
+        }
+        if (isAutoModeRunning.value) { expandPersonNodes(); }
+      }
+      expandPersonNodes();
+    }
+  });
 
   cy
     .on('onetap', 'node', async (evt) => {
@@ -578,5 +608,18 @@ body {
 
 .o-load__overlay {
   background: rgba(0, 0, 0, 0.3);
+}
+
+.isAutoModeRunning svg {
+  animation: isAutoModeRunning 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+}
+@keyframes isAutoModeRunning {
+  from {
+    transform: rotate(0turn);
+  }
+
+  to {
+    transform: rotate(1turn);
+  }
 }
 </style>

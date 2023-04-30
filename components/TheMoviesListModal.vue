@@ -32,6 +32,9 @@
         >
           {{ row[column.field] }}
         </a>
+        <template v-else-if="column.field === 'vote_average'">
+          {{ Math.round(row[column.field] * 100 / 10) }}%
+        </template>
         <template v-else-if="column.field === 'runtime'">
           {{ row[column.field] }}m
         </template>
@@ -54,7 +57,15 @@
                 crossorigin="anonymous"
                 :src="`https://image.tmdb.org/t/p/w500${row.poster_path}`"
               >
-              <p><em>{{ row.tagline }}</em></p>
+              <p>
+                <em>{{ row.tagline }}</em>
+                <OIcon
+                  title="Focus"
+                  icon="image-filter-center-focus"
+                  size="small"
+                  @click="$emit('focus', row.id)"
+                />
+              </p>
               <p>{{ row.overview }}</p>
               <p>{{ row.credits?.cast?.slice(0, 5).map(p => p.name).join(', ') }}</p>
             </div>
@@ -67,7 +78,7 @@
 
 <script setup lang="ts">
 import { MovieResponse, CreditsResponse } from 'moviedb-promise/dist/request-types';
-import { OModal, OTable, OTableColumn } from '@oruga-ui/oruga-next';
+import { OModal, OTable, OTableColumn, OIcon } from '@oruga-ui/oruga-next';
 
 type ExtendedMovieResponse = MovieResponse & { credits: CreditsResponse }
 
@@ -76,7 +87,7 @@ const props = defineProps<{
   movies: ExtendedMovieResponse[],
 }>();
 
-const emit = defineEmits(['update:isShowing']);
+const emit = defineEmits(['update:isShowing', 'focus']);
 
 const columns = ref([
   {
@@ -128,7 +139,6 @@ const numberFormatter = new Intl.NumberFormat();
 const rows = computed(() => props.movies.map((movie: ExtendedMovieResponse) => ({
   ...movie,
   release_year: movie.release_date?.split('-')[0],
-  vote_average: movie.vote_average && `${Math.round(movie.vote_average * 100 / 10)}%`,
   popularity: movie.popularity && Math.round(movie.popularity),
   cast_num: movie.credits?.cast?.length,
 })));
