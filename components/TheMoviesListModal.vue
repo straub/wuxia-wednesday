@@ -32,6 +32,9 @@
         >
           {{ row[column.field] }}
         </a>
+        <template v-else-if="column.field === 'genres'">
+          {{ row[column.field]?.[0].name }}
+        </template>
         <template v-else-if="column.field === 'vote_average'">
           {{ Math.round(row[column.field] * 100 / 10) }}%
         </template>
@@ -66,6 +69,7 @@
                   @click="$emit('focus', row.id)"
                 />
               </p>
+              <p>{{ row.genres?.map(g => g.name).join(', ') }}</p>
               <p>{{ row.overview }}</p>
               <p>{{ row.credits?.cast?.slice(0, 5).map(p => p.name).join(', ') }}</p>
             </div>
@@ -102,6 +106,11 @@ const columns = ref([
   {
     field: 'release_year',
     label: 'Release',
+    sortable: true,
+  },
+  {
+    field: 'genres',
+    label: 'Genre',
     sortable: true,
   },
   {
