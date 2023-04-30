@@ -376,22 +376,7 @@ onMounted(async () => {
     const type = id.split(':')[0];
     const otherType = type === 'movie' ? 'person' : 'movie';
     const ele = cy.getElementById(id);
-    const {
-      name, title, profile_path, poster_path, original_language, release_date, vote_count, vote_average,
-      popularity, runtime,
-    } = newData;
-    ele.data({
-      name,
-      title,
-      profile_path,
-      poster_path,
-      original_language,
-      release_date,
-      vote_count,
-      vote_average,
-      popularity,
-      runtime,
-    });
+    ele.data(newData);
     console.log({ id, type, newData, ele });
 
     const currentPage = ele.data('currentPage') ?? 0;
@@ -403,8 +388,18 @@ onMounted(async () => {
     ];
 
     const newNodes = credits
-    // .filter(credit => cy.getElementById(`movie:${credit.id}`).length === 0)
-    // .sort((a, b) => b.vote_average - a.vote_average)
+      // .filter(credit => cy.getElementById(`movie:${credit.id}`).length === 0)
+      // .sort((a, b) => b.vote_average - a.vote_average)
+      .filter((credit) => {
+        let include = true;
+        if (credit.vote_count !== undefined) {
+          include &&= credit.vote_count >= 50;
+        }
+        if (credit.runtime !== undefined) {
+          include &&= credit.runtime >= 45;
+        }
+        return include;
+      })
       .sort((a, b) => b.popularity - a.popularity)
       .slice(currentPage * 10, (currentPage + 1) * 10)
       .map((credit) => {
