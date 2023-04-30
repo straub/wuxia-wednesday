@@ -14,11 +14,12 @@
       <li>Click "<OIcon title="Search" icon="movie-search-outline" size="small" />" to choose a different movie and start exploring.</li>
       <li>Click movie posters or people to load more data and expand their connections on the graph.</li>
       <li>Double click to open more details on TMDb.</li>
+      <li>Right- or long-click to open the context menu.</li>
       <li>Click and drag to pan the graph, scroll or pinch to zoom.</li>
       <li>Click "<OIcon title="Fit All" icon="fit-to-page-outline" size="small" />" to fit the whole graph within the viewport.</li>
       <li>Click "<OIcon title="Focus on Highlighted" icon="image-filter-center-focus" size="small" />" to fit only the currently highlighted nodes within the viewport.</li>
       <li>Click "<OIcon title="Movies List" icon="table" size="small" />" to view all the movies in the graph as a sortable table.</li>
-      <li>Click "<OIcon title="Auto Mode" icon="auto-mode" size="small" />" to begin expanding all person nodes in the graph in turn until all reachable movies are visible.</li>
+      <li>Click "<OIcon title="Auto Mode" icon="auto-mode" size="small" />" to begin expanding all people in the graph in turn until all reachable movies are visible.</li>
     </ul>
     <h3>Credits</h3>
     <p>

@@ -349,17 +349,30 @@ onMounted(async () => {
 
   const layoutUtil = cy.layoutUtilities();
 
+  const openDetails = (id) => {
+    if (id.startsWith('movie:') || id.startsWith('person:')) {
+      window.open(`https://www.themoviedb.org/${id.replace(':', '/')}`);
+    }
+  };
+
   cy.cxtmenu({
-    commands: [ // an array of commands to list in the menu or a function that returns the array
-      { // example command
-        content: 'Prune', // html/text content to be displayed in the menu
-        select: function (ele) { // a function to execute when the command is selected
-          console.log('selected for prune', ele.id()); // `ele` holds the reference to the active element
+    commands: [
+      {
+        content: 'Details',
+        select: function (ele) {
+          const id = ele.id();
+          console.log('selected for details', id);
+          openDetails(id);
+        },
+      },
+      {
+        content: 'Prune',
+        select: function (ele) {
+          const id = ele.id();
+          console.log('selected for prune', id);
+          // ele.successors().remove();
           ele.remove();
           saveState();
-        },
-        hover: function (ele) { // a function to execute when the command is hovered
-          console.log(ele.id()); // `ele` holds the reference to the active element
         },
       },
     ],
@@ -537,9 +550,7 @@ onMounted(async () => {
       const id = node.id();
       console.log('dbltapped ' + id);
 
-      if (id.startsWith('movie:') || id.startsWith('person:')) {
-        window.open(`https://www.themoviedb.org/${id.replace(':', '/')}`);
-      }
+      openDetails(id);
     })
     .on('mouseover', 'node', (evt) => {
       const node = evt.target;
