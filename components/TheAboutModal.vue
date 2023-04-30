@@ -18,7 +18,7 @@
       <li>Click "<OIcon title="Fit All" icon="fit-to-page-outline" size="small" />" to fit the whole graph within the viewport.</li>
       <li>Click "<OIcon title="Focus on Highlighted" icon="image-filter-center-focus" size="small" />" to fit only the currently highlighted nodes within the viewport.</li>
       <li>Click "<OIcon title="Movies List" icon="table" size="small" />" to view all the movies in the graph as a sortable table.</li>
-      <li>Click "<OIcon title="Auto Mode" icon="auto-mode" size="small" />" to begin expanding all Person nodes in the graph in turn until all reachable movies are visible.</li>
+      <li>Click "<OIcon title="Auto Mode" icon="auto-mode" size="small" />" to begin expanding all person nodes in the graph in turn until all reachable movies are visible.</li>
     </ul>
     <h3>Credits</h3>
     <p>
