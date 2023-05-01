@@ -375,6 +375,14 @@ onMounted(async () => {
           saveState();
         },
       },
+      {
+        content: 'Expand All',
+        select: function (ele) {
+          const id = ele.id();
+          console.log('selected for expand all', id);
+          fetchAndExpandNode(id, { all: true });
+        },
+      },
     ],
   });
 
@@ -402,8 +410,9 @@ onMounted(async () => {
   /**
    * @param {string} id
    * @param {Object} [newData]
+   * @param {Object} [options]
    */
-  async function expandNode (id, newData = {}) {
+  async function expandNode (id, newData = {}, { all = false } = {}) {
     const type = id.split(':')[0];
     const otherType = type === 'movie' ? 'person' : 'movie';
     const ele = cy.getElementById(id);
@@ -433,7 +442,7 @@ onMounted(async () => {
         return include;
       })
       .sort((a, b) => b.popularity - a.popularity)
-      .slice(currentPage * 10, (currentPage + 1) * 10)
+      .slice(all ? 0 : currentPage * 10, all ? undefined : (currentPage + 1) * 10)
       .map((credit) => {
         return [
           {
@@ -508,6 +517,16 @@ onMounted(async () => {
     }
   }
 
+  async function fetchAndExpandNode (id, options = {}) {
+    if (id.startsWith('movie:')) {
+      const movie = await fetchMovie(id);
+      await expandNode(id, movie, options);
+    } else if (id.startsWith('person:')) {
+      const person = await fetchPerson(id);
+      await expandNode(id, person, options);
+    }
+  }
+
   watch(isAutoModeRunning, () => {
     if (isAutoModeRunning.value) {
       async function expandPersonNodes () {
@@ -516,8 +535,7 @@ onMounted(async () => {
 
           const id = node.id();
 
-          const person = await fetchPerson(id);
-          await expandNode(id, person);
+          await fetchAndExpandNode(id);
         }
         if (isAutoModeRunning.value) { expandPersonNodes(); }
       }
@@ -534,13 +552,7 @@ onMounted(async () => {
       try {
         isLoading.value = true;
 
-        if (id.startsWith('movie:')) {
-          const movie = await fetchMovie(id);
-          await expandNode(id, movie);
-        } else if (id.startsWith('person:')) {
-          const person = await fetchPerson(id);
-          await expandNode(id, person);
-        }
+        await fetchAndExpandNode(id);
       } finally {
         isLoading.value = false;
       }
