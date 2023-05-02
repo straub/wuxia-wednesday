@@ -15,11 +15,13 @@
         if (!movie) return;
         cy.nodes().remove()
         movie = await fetchMovie(movie.id)
+        const id = `movie:${movie.id}`;
         const ele = cy.add([{
-          data: { ...movie, id: `movie:${movie.id}` },
+          data: { ...movie, id },
           classes: ['movie', 'foreground'],
           pannable: true,
         }])
+        // await fetchAndExpandNode(id);
         cy.fit(ele, padding)
         saveState()
         isSearching = false
@@ -317,6 +319,8 @@ onMounted(async () => {
   addEventListener('popstate', onPopstate);
   onUnmounted(() => removeEventListener('popstate', onPopstate));
 
+  const layoutUtil = cy.layoutUtilities();
+
   if (history.state?.elements?.length > 0) {
     restoreState(history.state);
   } else {
@@ -330,10 +334,12 @@ onMounted(async () => {
 
     console.log({ initialMovie });
 
+    const initialId = `movie:${initialMovie.id}`;
+
     const elements = [
       {
         group: 'nodes',
-        data: { ...initialMovie, id: `movie:${initialMovie.id}` },
+        data: { ...initialMovie, id: initialId },
         classes: ['movie', 'foreground'],
         pannable: true,
       },
@@ -341,13 +347,13 @@ onMounted(async () => {
 
     cy.add(elements);
 
+    await fetchAndExpandNode(initialId);
+
     saveState();
   }
 
   fitOrFocus();
   isLoading.value = false;
-
-  const layoutUtil = cy.layoutUtilities();
 
   const openDetails = (id) => {
     if (id.startsWith('movie:') || id.startsWith('person:')) {
@@ -390,22 +396,24 @@ onMounted(async () => {
    * @param {cytoscape.NodeSingular} ele
    * @param {function} cb
    */
-  const runLayout = (ele, cb) => cy.layout({
-    name: 'fcose',
-    nodeDimensionsIncludeLabels: true,
-    fit: false,
-    randomize: false,
-    quality: 'proof',
-    // edgeElasticity: edge => 0.3,
-    // nodeRepulsion: node => 10000,
-    padding,
-    fixedNodeConstraint: ele ? [{ nodeId: ele.id(), position: ele.position() }] : [],
-    stop: () => {
-      saveState();
-      cb();
-    },
-  })
-    .run();
+  function runLayout (ele, cb) {
+    cy.layout({
+      name: 'fcose',
+      nodeDimensionsIncludeLabels: true,
+      fit: false,
+      randomize: false,
+      quality: 'proof',
+      // edgeElasticity: edge => 0.3,
+      // nodeRepulsion: node => 10000,
+      padding,
+      fixedNodeConstraint: ele ? [{ nodeId: ele.id(), position: ele.position() }] : [],
+      stop: () => {
+        saveState();
+        cb();
+      },
+    })
+      .run();
+  }
 
   /**
    * @param {string} id
@@ -428,7 +436,6 @@ onMounted(async () => {
     ];
 
     const newNodes = credits
-      // .filter(credit => cy.getElementById(`movie:${credit.id}`).length === 0)
       // .sort((a, b) => b.vote_average - a.vote_average)
       .filter((credit) => {
         let include = true;
@@ -489,6 +496,9 @@ onMounted(async () => {
       })
       .flat();
 
+    const nodesNotInGraph = newNodes
+      .filter(credit => cy.getElementById(`${otherType}:${credit.id}`).length === 0);
+
     layoutUtil.placeNewNodes(
       cy.add(newNodes),
     );
@@ -502,9 +512,9 @@ onMounted(async () => {
     const neighborhood = ele.closedNeighborhood();
     neighborhood.removeClass('background').addClass('foreground');
 
-    cy.animate({ center: { eles: ele } });
+    if (nodesNotInGraph.length) {
+      await new Promise(resolve => cy.animate({ center: { eles: ele }, complete: resolve }));
 
-    if (newNodes.length) {
       await new Promise((resolve) => {
         runLayout(
           ele,
@@ -515,29 +525,49 @@ onMounted(async () => {
         );
       });
     }
+
+    return {
+      fullyExpanded: !nodesNotInGraph.length,
+    };
   }
 
   async function fetchAndExpandNode (id, options = {}) {
     if (id.startsWith('movie:')) {
       const movie = await fetchMovie(id);
-      await expandNode(id, movie, options);
+      return await expandNode(id, movie, options);
     } else if (id.startsWith('person:')) {
       const person = await fetchPerson(id);
-      await expandNode(id, person, options);
+      return await expandNode(id, person, options);
     }
   }
 
   watch(isAutoModeRunning, () => {
     if (isAutoModeRunning.value) {
       async function expandPersonNodes () {
+        let allFullyExpanded = true;
+
         for (const node of cy.$('.person')) {
           if (!isAutoModeRunning.value) { break; }
 
           const id = node.id();
 
-          await fetchAndExpandNode(id);
+          const { fullyExpanded } = await fetchAndExpandNode(id);
+
+          allFullyExpanded &&= fullyExpanded;
         }
-        if (isAutoModeRunning.value) { expandPersonNodes(); }
+
+        if (allFullyExpanded) {
+          isAutoModeRunning.value = false;
+          cy.animate({
+            fit: { eles: undefined, padding },
+          });
+        }
+
+        if (isAutoModeRunning.value) {
+          expandPersonNodes();
+        } else {
+          saveState();
+        }
       }
       expandPersonNodes();
     }
