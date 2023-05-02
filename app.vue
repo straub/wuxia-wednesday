@@ -527,7 +527,8 @@ onMounted(async () => {
     }
 
     return {
-      fullyExpanded: !nodesNotInGraph.length,
+      // This means we've run out of "pages".
+      fullyExpanded: !newNodes.length,
     };
   }
 
