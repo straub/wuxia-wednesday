@@ -598,7 +598,7 @@ onMounted(async () => {
     .on('mouseover', 'node', (evt) => {
       const node = evt.target;
       cursor.value = 'pointer';
-      title.value = node.data('title') ?? '';
+      title.value = node.data('title') ?? node.data('name') ?? '';
     })
     .on('mouseout', 'node', () => {
       cursor.value = 'inherit';
