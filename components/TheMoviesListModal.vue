@@ -31,8 +31,16 @@
         v-bind="column"
       >
         <template #default="{ row }">
+          <OIcon
+            v-if="column.field==='star'"
+            title="Add to shortlist"
+            :icon="row.star ? 'star' : 'star-outline'"
+            :style="{cursor:'pointer'}"
+            size="small"
+            @click="stars.has(row.id) ? stars.delete(row.id) : stars.add(row.id)"
+          />
           <img
-            v-if="column.field == 'poster_path' && row.poster_path"
+            v-else-if="column.field === 'poster_path' && row.poster_path"
             width="32"
             crossorigin="anonymous"
             :src="`https://image.tmdb.org/t/p/w500${row.poster_path}`"
@@ -64,6 +72,13 @@
             :step="column.step"
             :custom-formatter="column.customFormatter"
           />
+          <OSwitch
+            v-else-if="column.field==='star'"
+            v-model="filters.star"
+            title="Show shortlist"
+            :style="{ opacity: filters.star || stars.size ? 1 : 0 }"
+            variant="info"
+          />
           <OInput
             v-else
             v-model="filters[column.field]"
@@ -90,6 +105,7 @@
                   title="Focus"
                   icon="image-filter-center-focus"
                   size="small"
+                  :style="{cursor:'pointer'}"
                   @click="$emit('focus', row.id)"
                 /> <em>{{ row.tagline }}</em>
               </p>
@@ -107,9 +123,9 @@
 <script setup lang="ts">
 import { MovieResponse, CreditsResponse, Cast } from 'moviedb-promise/dist/request-types';
 import { Genre } from 'moviedb-promise/dist/types';
-import { OModal, OTable, OTableColumn, OIcon, OInput } from '@oruga-ui/oruga-next';
+import { OModal, OTable, OTableColumn, OIcon, OInput, OSwitch } from '@oruga-ui/oruga-next';
 
-type ExtendedMovieResponse = MovieResponse & { credits: CreditsResponse }
+type ExtendedMovieResponse = MovieResponse & { id: string, credits: CreditsResponse }
 
 type Filters = { [key : string]: string | [number, number] }
 
@@ -161,6 +177,13 @@ const makeCustomRangeSearchFunction = (field : string) => (row, input) => {
 };
 
 const columns = ref([
+  {
+    field: 'star',
+    searchable: true,
+    customSearch (row, input) {
+      return !input || row.star === input;
+    },
+  },
   {
     field: 'poster_path',
     label: 'Poster',
@@ -236,8 +259,11 @@ type Field = typeof columns.value[number]['field'];
 
 const numberFormatter = new Intl.NumberFormat();
 
+const stars = reactive(new Set<string>());
+
 const rows = computed(() => props.movies.map((movie: ExtendedMovieResponse) => ({
   ...movie,
+  star: stars.has(movie.id),
   release_year: Number(movie.release_date?.split('-')[0]),
   genres: movie.genres?.map(g => g.name),
   vote_average: movie.vote_average && Math.round(movie.vote_average * 10),
@@ -279,6 +305,12 @@ columns.value
   position: absolute;
   top: 3.5rem;
   right: 2rem;
+}
+.modal-movies-list .o-table__td {
+    vertical-align: middle;
+}
+.o-switch {
+  transition: opacity 200ms;
 }
 // Hack in some space for the sort icon.
 .o-table__th-current-sort[draggable=false] > span {

@@ -14,6 +14,8 @@ import {
   mdiArrowUp,
   mdiChevronRight,
   mdiAutoMode,
+  mdiStar,
+  mdiStarOutline,
 } from '@mdi/js';
 
 const knownIcons = {
@@ -30,6 +32,8 @@ const knownIcons = {
   mdiArrowUp,
   mdiChevronRight,
   mdiAutoMode,
+  mdiStar,
+  mdiStarOutline,
 };
 
 export default {
