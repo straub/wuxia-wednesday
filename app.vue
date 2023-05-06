@@ -34,6 +34,12 @@
       @focus="async (id) => {
         cy.fit(cy.$id(id), padding);
       }"
+      @filtered-movies="(ids) => {
+        cy.batch(() => {
+          cy.$('.movie').addClass('filtered');
+          ids.forEach(id => cy.getElementById(id).removeClass('filtered'));
+        });
+      }"
     />
     <TheLogo v-model:is-glitching="isGlitching" />
     <div id="toolbar">
@@ -267,6 +273,13 @@ onMounted(async () => {
           opacity: 0.9,
           'transition-property': 'opacity',
           'transition-duration': '2s',
+        },
+      },
+      {
+        selector: 'node.filtered',
+        style: {
+          opacity: 0.2,
+          'underlay-opacity': 0,
         },
       },
       {

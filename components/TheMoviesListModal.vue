@@ -14,7 +14,12 @@
       v-if="isFiltered"
       class="reset-filters"
       href="#"
-      @click.prevent="table && (table.filters = {})"
+      @click.prevent="() => {
+        if (table) {
+          table.filters = {};
+          Object.keys(savedFilters).forEach(key => delete savedFilters[key]);
+        }
+      }"
     >Reset Filters</a>
     <OTable
       ref="table"
@@ -133,44 +138,40 @@ type Filters = { [key : string]: string | [number, number] }
 
 export interface Props {
   isShowing: Boolean,
-  filters?: Filters,
   movies: ExtendedMovieResponse[],
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  filters: () => ({}),
-});
+const props = defineProps<Props>();
 
-const emit = defineEmits(['update:isShowing', 'update:filters', 'focus']);
+const emit = defineEmits(['update:isShowing', 'focus', 'filteredMovies']);
 
 // There's a lot of state in filters, and we want to preserve it so it doesn't
 // get reset if a user closes the modal and comes back.
-const table = ref<{ filters: Filters, newDataTotal: number }>();
+const table = ref<{ filters: Filters, newData: { id: string }[], newDataTotal: number }>();
 
 const isFiltered = computed(() => table.value?.newDataTotal !== props.movies.length);
+
+const savedFilters: Filters = {};
 
 watch(
   table,
   (newTable) => {
     if (newTable) {
-      console.log('newTable', newTable);
-      newTable.filters = props.filters;
+      newTable.filters = savedFilters;
     }
   },
 );
 
 watch(
-  () => table.value?.filters,
-  (newFilters) => {
-    if (newFilters) {
-      console.log('newFilters', newFilters);
-      emit('update:filters', newFilters);
+  () => table.value?.newData,
+  (newNewData) => {
+    if (newNewData) {
+      emit('filteredMovies', newNewData.map(r => r.id));
     }
   },
-  { deep: true },
 );
 
-const makeCustomRangeSearchFunction = (field : string) => (row, input) => {
+const makeCustomRangeSearchFunction = (field: string) => (row: { [x: string]: number; }, input: [number, number]) => {
   if (Array.isArray(input)) {
     const [min, max] = input;
     return row[field] <= max && row[field] >= min;
@@ -182,7 +183,7 @@ const columns = ref([
   {
     field: 'star',
     searchable: true,
-    customSearch (row, input) {
+    customSearch (row: { star: boolean; }, input: boolean) {
       return !input || row.star === input;
     },
   },
