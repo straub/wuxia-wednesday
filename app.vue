@@ -31,9 +31,11 @@
     <TheMoviesListModal
       v-model:is-showing="isShowingMoviesList"
       :movies="allMovies"
+      :filters="filters"
       @focus="async (id) => {
         cy.fit(cy.$id(id), padding);
       }"
+      @update:filters="newFilters => filters = newFilters"
     />
     <TheLogo v-model:is-glitching="isGlitching" />
     <div id="toolbar">
@@ -98,14 +100,12 @@
 <script setup>
 import cytoscape from 'cytoscape';
 import fcose from 'cytoscape-fcose';
-import cola from 'cytoscape-cola';
 import layoutUtilities from 'cytoscape-layout-utilities';
 import cxtmenu from 'cytoscape-cxtmenu';
 import { MovieDb } from 'moviedb-promise';
 import { OLoading, OField, OButton } from '@oruga-ui/oruga-next';
 
 cytoscape.use(fcose);
-cytoscape.use(cola);
 cytoscape.use(layoutUtilities);
 cytoscape.use(cxtmenu);
 
@@ -127,6 +127,10 @@ const title = ref('');
 const mode = ref('focus');
 
 const allMovies = ref([]);
+
+const filters = ref({});
+
+watch(filters, newFilters => console.log('app newFilters', newFilters));
 
 const padding = 30;
 
@@ -435,7 +439,9 @@ onMounted(async () => {
       // ...(newData.credits ?? newData.movie_credits).crew,
     ];
 
-    const newNodes = credits
+    const perPage = 10;
+
+    const pageOfNodes = credits
       // .sort((a, b) => b.vote_average - a.vote_average)
       .filter((credit) => {
         let include = true;
@@ -449,7 +455,7 @@ onMounted(async () => {
         return include;
       })
       .sort((a, b) => b.popularity - a.popularity)
-      .slice(all ? 0 : currentPage * 10, all ? undefined : (currentPage + 1) * 10)
+      .slice(all ? 0 : currentPage * perPage, all ? undefined : (currentPage + 1) * perPage)
       .map((credit) => {
         return [
           {
@@ -463,10 +469,13 @@ onMounted(async () => {
       })
       .flat();
 
+    const nodesNotInGraph = pageOfNodes
+      .filter(credit => !cy.hasElementWithId(`${otherType}:${credit.id}`));
+
     if (type === 'person') {
       // Fetch additional data on new movies
       await Promise.all(
-        newNodes.map(async (node) => {
+        nodesNotInGraph.map(async (node) => {
           const movie = await fetchMovie(node.data.id.replace('movie:', ''));
 
           node.data = {
@@ -477,7 +486,11 @@ onMounted(async () => {
       );
     }
 
-    const allEdges = credits
+    layoutUtil.placeNewNodes(
+      cy.add(nodesNotInGraph),
+    );
+
+    const allValidEdges = credits
       .map((credit) => {
         const movie = type === 'movie' ? newData : credit;
         const person = type === 'person' ? newData : credit;
@@ -494,24 +507,17 @@ onMounted(async () => {
           },
         ];
       })
-      .flat();
-
-    const nodesNotInGraph = newNodes
-      .filter(credit => cy.getElementById(`${otherType}:${credit.id}`).length === 0);
-
-    layoutUtil.placeNewNodes(
-      cy.add(newNodes),
-    );
-
-    const allValidEdges = allEdges
-      .filter(edge => cy.$id(edge.data.source).size() && cy.$id(edge.data.target).size());
+      .flat()
+      .filter(edge => cy.hasElementWithId(edge.data.source) && cy.hasElementWithId(edge.data.target));
 
     cy.add(allValidEdges);
 
+    // Highlight neighborhood of expanded node
     cy.nodes().addClass('background').removeClass('foreground');
     const neighborhood = ele.closedNeighborhood();
     neighborhood.removeClass('background').addClass('foreground');
 
+    // Only animate and layout if we added new nodes
     if (nodesNotInGraph.length) {
       await new Promise(resolve => cy.animate({ center: { eles: ele }, complete: resolve }));
 
@@ -528,7 +534,7 @@ onMounted(async () => {
 
     return {
       // This means we've run out of "pages".
-      fullyExpanded: !newNodes.length,
+      fullyExpanded: !pageOfNodes.length,
     };
   }
 
