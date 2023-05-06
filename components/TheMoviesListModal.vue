@@ -24,8 +24,6 @@
       show-detail-icon
       custom-detail-row
       :debounce-search="30"
-      :default-sort="savedSort"
-      @sort="(field: string, dir: SortDir) => savedSort = [field, dir]"
     >
       <OTableColumn
         v-for="column in columns"
@@ -117,30 +115,40 @@ type Filters = { [key : string]: string | [number, number] }
 
 export interface Props {
   isShowing: Boolean,
+  filters?: Filters,
   movies: ExtendedMovieResponse[],
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  filters: () => ({}),
+});
 
-const emit = defineEmits(['update:isShowing', 'focus']);
+const emit = defineEmits(['update:isShowing', 'update:filters', 'focus']);
 
 // There's a lot of state in filters, and we want to preserve it so it doesn't
 // get reset if a user closes the modal and comes back.
 const table = ref<{ filters: Filters, newDataTotal: number }>();
-const savedFilters = ref<Filters>({});
-type SortDir = 'asc' | 'desc';
-const savedSort = ref<[string, SortDir]>(['vote_average', 'desc']);
 
 const isFiltered = computed(() => table.value?.newDataTotal !== props.movies.length);
 
 watch(
   table,
-  newTable => newTable && (newTable.filters = savedFilters.value),
+  (newTable) => {
+    if (newTable) {
+      console.log('newTable', newTable);
+      newTable.filters = props.filters;
+    }
+  },
 );
 
 watch(
   () => table.value?.filters,
-  newFilters => newFilters && (savedFilters.value = newFilters),
+  (newFilters) => {
+    if (newFilters) {
+      console.log('newFilters', newFilters);
+      emit('update:filters', newFilters);
+    }
+  },
   { deep: true },
 );
 
@@ -152,7 +160,7 @@ const makeCustomRangeSearchFunction = (field : string) => (row, input) => {
   return true;
 };
 
-const columns = [
+const columns = ref([
   {
     field: 'poster_path',
     label: 'Poster',
@@ -223,8 +231,8 @@ const columns = [
     searchable: true,
     customSearch: makeCustomRangeSearchFunction('cast_num'),
   },
-];
-type Field = typeof columns[number]['field'];
+]);
+type Field = typeof columns.value[number]['field'];
 
 const numberFormatter = new Intl.NumberFormat();
 
@@ -243,7 +251,7 @@ const mins : StringToComputedNumber = {};
 const maxes : StringToComputedNumber = {};
 
 // Compute a minimum and maximum for each of our searchable numeric fields.
-columns
+columns.value
   .filter(({ searchable, numeric }: { searchable?: boolean, numeric?: boolean}) => searchable && numeric)
   .forEach(({ field }: { field: Field }) => {
     mins[field] = computed(() => rows.value.reduce((min, { [field]: value = Infinity }) => {
