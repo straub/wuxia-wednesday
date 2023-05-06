@@ -7,9 +7,15 @@
   >
     <h2>
       {{ table?.newDataTotal }} {{ table?.newDataTotal === 1 ? 'movie' : 'movies' }}{{
-        table?.newDataTotal !== movies.length ? ` out of ${movies.length}` : ''
+        isFiltered ? ` out of ${movies.length}` : ''
       }}
     </h2>
+    <a
+      v-if="isFiltered"
+      class="reset-filters"
+      href="#"
+      @click.prevent="table && (table.filters = {})"
+    >Reset Filters</a>
     <OTable
       ref="table"
       :data="rows"
@@ -17,6 +23,9 @@
       detailed
       show-detail-icon
       custom-detail-row
+      :debounce-search="30"
+      :default-sort="savedSort"
+      @sort="(field: string, dir: SortDir) => savedSort = [field, dir]"
     >
       <OTableColumn
         v-for="column in columns"
@@ -25,7 +34,7 @@
       >
         <template #default="{ row }">
           <img
-            v-if="column.field == 'poster' && row.poster_path"
+            v-if="column.field == 'poster_path' && row.poster_path"
             width="32"
             crossorigin="anonymous"
             :src="`https://image.tmdb.org/t/p/w500${row.poster_path}`"
@@ -54,13 +63,14 @@
             v-model="filters[column.field]"
             :min="mins[column.field].value"
             :max="maxes[column.field].value"
-            :step="columns.step"
+            :step="column.step"
             :custom-formatter="column.customFormatter"
           />
           <OInput
             v-else
             v-model="filters[column.field]"
             :type="column.numeric ? 'number' : 'text'"
+            size="small"
             placeholder="Type to filter..."
           />
         </template>
@@ -78,17 +88,16 @@
                 :src="`https://image.tmdb.org/t/p/w500${row.poster_path}`"
               >
               <p>
-                <em>{{ row.tagline }}</em>
                 <OIcon
                   title="Focus"
                   icon="image-filter-center-focus"
                   size="small"
                   @click="$emit('focus', row.id)"
-                />
+                /> <em>{{ row.tagline }}</em>
               </p>
               <p>{{ row.genres?.join(', ') }}</p>
               <p>{{ row.overview }}</p>
-              <p>{{ row.credits?.cast?.slice(0, 5).map(p => p.name).join(', ') }}</p>
+              <p>{{ row.credits?.cast?.slice(0, 5).map((p: Cast) => p.name).join(', ') }}</p>
             </div>
           </td>
         </tr>
@@ -98,7 +107,8 @@
 </template>
 
 <script setup lang="ts">
-import { MovieResponse, CreditsResponse } from 'moviedb-promise/dist/request-types';
+import { MovieResponse, CreditsResponse, Cast } from 'moviedb-promise/dist/request-types';
+import { Genre } from 'moviedb-promise/dist/types';
 import { OModal, OTable, OTableColumn, OIcon, OInput } from '@oruga-ui/oruga-next';
 
 type ExtendedMovieResponse = MovieResponse & { credits: CreditsResponse }
@@ -116,17 +126,21 @@ const emit = defineEmits(['update:isShowing', 'focus']);
 
 // There's a lot of state in filters, and we want to preserve it so it doesn't
 // get reset if a user closes the modal and comes back.
-const table = ref<{ filters: Filters }>();
-const filters = ref<Filters>({});
+const table = ref<{ filters: Filters, newDataTotal: number }>();
+const savedFilters = ref<Filters>({});
+type SortDir = 'asc' | 'desc';
+const savedSort = ref<[string, SortDir]>(['vote_average', 'desc']);
+
+const isFiltered = computed(() => table.value?.newDataTotal !== props.movies.length);
 
 watch(
   table,
-  newTable => newTable && (newTable.filters = filters.value),
+  newTable => newTable && (newTable.filters = savedFilters.value),
 );
 
 watch(
   () => table.value?.filters,
-  newFilters => newFilters && (filters.value = newFilters),
+  newFilters => newFilters && (savedFilters.value = newFilters),
   { deep: true },
 );
 
@@ -138,9 +152,9 @@ const makeCustomRangeSearchFunction = (field : string) => (row, input) => {
   return true;
 };
 
-const columns = ref([
+const columns = [
   {
-    field: 'poster',
+    field: 'poster_path',
     label: 'Poster',
   },
   {
@@ -163,7 +177,7 @@ const columns = ref([
     label: 'Genre',
     sortable: true,
     searchable: true,
-    customFormatter: value => value?.[0],
+    customFormatter: (value : Genre[]) => value?.[0],
   },
   {
     field: 'vote_average',
@@ -172,7 +186,7 @@ const columns = ref([
     numeric: true,
     searchable: true,
     customSearch: makeCustomRangeSearchFunction('vote_average'),
-    customFormatter: value => `${value}%`,
+    customFormatter: (value : number) => `${value}%`,
   },
   {
     field: 'vote_count',
@@ -180,7 +194,7 @@ const columns = ref([
     sortable: true,
     numeric: true,
     searchable: true,
-    step: 100,
+    step: 10,
     customSearch: makeCustomRangeSearchFunction('vote_count'),
   },
   {
@@ -189,7 +203,7 @@ const columns = ref([
     sortable: true,
     numeric: true,
     searchable: true,
-    step: 100,
+    step: 10,
     customSearch: makeCustomRangeSearchFunction('popularity'),
   },
   {
@@ -199,7 +213,7 @@ const columns = ref([
     numeric: true,
     searchable: true,
     customSearch: makeCustomRangeSearchFunction('runtime'),
-    customFormatter: value => `${value}m`,
+    customFormatter: (value : number) => `${value}m`,
   },
   {
     field: 'cast_num',
@@ -209,7 +223,8 @@ const columns = ref([
     searchable: true,
     customSearch: makeCustomRangeSearchFunction('cast_num'),
   },
-]);
+];
+type Field = typeof columns[number]['field'];
 
 const numberFormatter = new Intl.NumberFormat();
 
@@ -228,8 +243,9 @@ const mins : StringToComputedNumber = {};
 const maxes : StringToComputedNumber = {};
 
 // Compute a minimum and maximum for each of our searchable numeric fields.
-columns.value.forEach(({ searchable, numeric, field }) => {
-  if (searchable && numeric) {
+columns
+  .filter(({ searchable, numeric }: { searchable?: boolean, numeric?: boolean}) => searchable && numeric)
+  .forEach(({ field }: { field: Field }) => {
     mins[field] = computed(() => rows.value.reduce((min, { [field]: value = Infinity }) => {
       if (value < min) { return value; }
       return min;
@@ -238,8 +254,7 @@ columns.value.forEach(({ searchable, numeric, field }) => {
       if (value > max) { return value; }
       return max;
     }, 0));
-  }
-});
+  });
 </script>
 
 <style lang="scss">
@@ -251,5 +266,15 @@ columns.value.forEach(({ searchable, numeric, field }) => {
   margin-bottom: 1rem;
   float: left;
   width: 20%;
+}
+.reset-filters {
+  position: absolute;
+  top: 3.5rem;
+  right: 2rem;
+}
+// Hack in some space for the sort icon.
+.o-table__th-current-sort[draggable=false] > span {
+  padding-right: 1rem;
+  display: inline-block;
 }
 </style>

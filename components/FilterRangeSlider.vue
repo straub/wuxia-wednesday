@@ -47,7 +47,6 @@ const rangeSliderModel = computed({
 watch(() => props.min, (newMin, oldMin) => {
   const [valueLow] = rangeSliderModel.value;
   if (oldMin === valueLow) {
-    console.log('new min %d replacing %d', newMin, oldMin);
     rangeSliderModel.value[0] = newMin;
   }
 });
@@ -56,7 +55,6 @@ watch(() => props.min, (newMin, oldMin) => {
 watch(() => props.max, (newMax, oldMax) => {
   const [, valueHigh] = rangeSliderModel.value;
   if (oldMax === valueHigh) {
-    console.log('new max %d replacing %d', newMax, oldMax);
     rangeSliderModel.value[1] = newMax;
   }
 });
