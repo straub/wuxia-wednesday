@@ -296,7 +296,7 @@ columns.value
 
 <style lang="scss">
 .modal-movies-list .o-modal__content {
-  width: 70vw;
+  width: 90vw;
 }
 .modal-movies-list .movie-list-details {
   margin-right: 1rem;
