@@ -19,10 +19,12 @@
     <OTable
       ref="table"
       :data="rows"
+      custom-row-key="id"
       default-sort-direction="desc"
       detailed
       show-detail-icon
       custom-detail-row
+      detail-key="id"
       :debounce-search="30"
     >
       <OTableColumn
