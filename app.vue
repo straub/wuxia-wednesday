@@ -31,11 +31,9 @@
     <TheMoviesListModal
       v-model:is-showing="isShowingMoviesList"
       :movies="allMovies"
-      :filters="filters"
       @focus="async (id) => {
         cy.fit(cy.$id(id), padding);
       }"
-      @update:filters="newFilters => filters = newFilters"
     />
     <TheLogo v-model:is-glitching="isGlitching" />
     <div id="toolbar">
@@ -127,10 +125,6 @@ const title = ref('');
 const mode = ref('focus');
 
 const allMovies = ref([]);
-
-const filters = ref({});
-
-watch(filters, newFilters => console.log('app newFilters', newFilters));
 
 const padding = 30;
 

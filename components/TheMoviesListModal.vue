@@ -107,28 +107,26 @@ type Filters = { [key : string]: string | [number, number] }
 
 export interface Props {
   isShowing: Boolean,
-  filters?: Filters,
   movies: ExtendedMovieResponse[],
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  filters: () => ({}),
-});
+const props = defineProps<Props>();
 
-const emit = defineEmits(['update:isShowing', 'update:filters', 'focus']);
+const emit = defineEmits(['update:isShowing', 'focus']);
 
 // There's a lot of state in filters, and we want to preserve it so it doesn't
 // get reset if a user closes the modal and comes back.
 const table = ref<{ filters: Filters }>();
+const filters = ref<Filters>({});
 
 watch(
   table,
-  newTable => newTable && (newTable.filters = props.filters),
+  newTable => newTable && (newTable.filters = filters.value),
 );
 
 watch(
   () => table.value?.filters,
-  newFilters => newFilters && emit('update:filters', newFilters),
+  newFilters => newFilters && (filters.value = newFilters),
   { deep: true },
 );
 
