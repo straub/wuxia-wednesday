@@ -90,18 +90,31 @@
             :custom-formatter="column.customFormatter"
           />
           <OSwitch
-            v-else-if="column.field==='star'"
+            v-else-if="column.field === 'star'"
             v-model="filters.star"
             title="Show shortlist"
             :style="{ opacity: filters.star || stars.size ? 1 : 0 }"
             variant="info"
+          />
+          <OInputitems
+            v-else-if="column.field === 'genres'"
+            v-model="filters.genres"
+            :data="availableGenres"
+            :allow-autocomplete="true"
+            :allow-new="false"
+            :open-on-focus="true"
+            :before-adding="(genre: string) => availableGenres.includes(genre)"
+            icon=""
+            variant="info"
+            size="small"
+            placeholder="Filter..."
           />
           <OInput
             v-else
             v-model="filters[column.field]"
             :type="column.numeric ? 'number' : 'text'"
             size="small"
-            placeholder="Type to filter..."
+            placeholder="Filter..."
           />
         </template>
       </OTableColumn>
@@ -140,7 +153,7 @@
 <script setup lang="ts">
 import { MovieResponse, CreditsResponse, Cast } from 'moviedb-promise/dist/request-types';
 import { Genre } from 'moviedb-promise/dist/types';
-import { OModal, OTable, OTableColumn, OIcon, OInput, OSwitch } from '@oruga-ui/oruga-next';
+import { OModal, OTable, OTableColumn, OIcon, OInput, OSwitch, OInputitems } from '@oruga-ui/oruga-next';
 
 type ExtendedMovieResponse = MovieResponse & { id: string, credits: CreditsResponse }
 
@@ -218,10 +231,13 @@ const columns = ref([
   },
   {
     field: 'genres',
-    label: 'Genre',
+    label: 'Genres',
     sortable: true,
     searchable: true,
-    customFormatter: (value : Genre[]) => value?.[0],
+    customSearch (row: { genresSet: Set<string>; }, input: string[]) {
+      return input && input.every((g: string) => row.genresSet.has(g));
+    },
+    customFormatter: (value : Genre[]) => `${value?.[0]}`,
   },
   {
     field: 'vote_average',
@@ -279,10 +295,23 @@ const rows = computed(() => props.movies.map((movie: ExtendedMovieResponse) => (
   star: stars.has(movie.id),
   release_year: Number(movie.release_date?.split('-')[0]),
   genres: movie.genres?.map(g => g.name),
+  genresSet: new Set(movie.genres?.map(g => g.name)),
   vote_average: movie.vote_average && Math.round(movie.vote_average * 10),
   popularity: movie.popularity && Math.round(movie.popularity),
   cast_num: movie.credits?.cast?.length,
 })));
+
+const availableGenres = computed(() => {
+  return Array.from(
+    new Set(
+      rows.value
+        .map(r => r.genres)
+        .flat()
+        .filter(g => !!g),
+    ),
+  )
+    .sort();
+});
 
 interface StringToComputedNumber { [key: string]: ComputedRef<number> }
 
@@ -322,39 +351,45 @@ function shareShortlist () {
 </script>
 
 <style lang="scss">
-.modal-movies-list .o-modal__content {
-  width: 90vw;
-}
-.modal-movies-list .movie-list-details {
-  margin-right: 1rem;
-  margin-bottom: 1rem;
-  float: left;
-  width: 20%;
-}
-.modal-movies-list .modal-header {
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-}
-  .modal-movies-list .controls {
+.modal-movies-list {
+  .o-modal__content {
+    width: 90vw;
+  }
+  .movie-list-details {
+    margin-right: 1rem;
+    margin-bottom: 1rem;
+    float: left;
+    width: 20%;
+  }
+  .modal-header {
     display: flex;
     flex-flow: row wrap;
-    justify-content: flex-end;
+    justify-content: space-between;
     align-items: center;
     gap: 1rem;
-    padding: 1rem 0;
+
+    .controls {
+      display: flex;
+      flex-flow: row wrap;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 0;
+    }
   }
-.modal-movies-list .o-table__td {
-    vertical-align: middle;
-}
-.o-switch {
-  transition: opacity 200ms;
-}
-// Hack in some space for the sort icon.
-.o-table__th-current-sort[draggable=false] > span {
-  padding-right: 1rem;
-  display: inline-block;
+  .o-table__td {
+      vertical-align: middle;
+  }
+  .o-switch {
+    transition: opacity 200ms;
+  }
+  .o-inputit__item {
+      color: #fff;
+  }
+  // Hack in some space for the sort icon.
+  .o-table__th-current-sort[draggable=false] > span {
+    padding-right: 1rem;
+    display: inline-block;
+  }
 }
 </style>
