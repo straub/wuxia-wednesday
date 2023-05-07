@@ -49,9 +49,9 @@
       >
         <template #default="{ row }">
           <OIcon
-            v-if="column.field==='star'"
+            v-if="column.field === 'star'"
             title="Add to shortlist"
-            :icon="row.star ? 'star' : 'star-outline'"
+            :icon="stars.has(row.id) ? 'star' : 'star-outline'"
             :style="{cursor:'pointer'}"
             size="small"
             @click.prevent="stars.has(row.id) ? stars.delete(row.id) : stars.add(row.id)"
