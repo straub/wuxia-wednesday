@@ -5,22 +5,32 @@
     width="100%"
     @update:active="(newValue: boolean) => emit('update:isShowing', newValue)"
   >
-    <h2>
-      {{ table?.newDataTotal }} {{ table?.newDataTotal === 1 ? 'movie' : 'movies' }}{{
-        isFiltered ? ` out of ${movies.length}` : ''
-      }}
-    </h2>
-    <a
-      v-if="isFiltered"
-      class="reset-filters"
-      href="#"
-      @click.prevent="() => {
-        if (table) {
-          table.filters = {};
-          Object.keys(savedFilters).forEach(key => delete savedFilters[key]);
-        }
-      }"
-    >Reset Filters</a>
+    <div class="modal-header">
+      <h2>
+        {{ table?.newDataTotal }} {{ table?.newDataTotal === 1 ? 'movie' : 'movies' }}{{
+          isFiltered ? ` out of ${movies.length}` : ''
+        }}
+      </h2>
+      <div class="controls">
+        <a
+          v-if="hasWebShareApi && stars.size"
+          class="share-shortlist"
+          href="#"
+          @click.prevent="shareShortlist"
+        >Share Your Shortlist</a>
+        <a
+          v-if="isFiltered"
+          class="reset-filters"
+          href="#"
+          @click.prevent="() => {
+            if (table) {
+              table.filters = {};
+              Object.keys(savedFilters).forEach(key => delete savedFilters[key]);
+            }
+          }"
+        >Reset Filters</a>
+      </div>
+    </div>
     <OTable
       ref="table"
       :data="rows"
@@ -44,7 +54,7 @@
             :icon="row.star ? 'star' : 'star-outline'"
             :style="{cursor:'pointer'}"
             size="small"
-            @click="stars.has(row.id) ? stars.delete(row.id) : stars.add(row.id)"
+            @click.prevent="stars.has(row.id) ? stars.delete(row.id) : stars.add(row.id)"
           />
           <img
             v-else-if="column.field === 'poster_path' && row.poster_path"
@@ -292,6 +302,23 @@ columns.value
       return max;
     }, 0));
   });
+
+const hasWebShareApi = !!navigator.share;
+
+const shortlistShareText = computed(() => rows.value
+  .filter(r => r.star)
+  .map(r => `${r.title} (${r.release_year}) ${r.runtime}m ${r.vote_average}%`)
+  .join('\n'));
+
+function shareShortlist () {
+  if (navigator.share) {
+    return navigator.share({
+      title: 'My Wuxia Wednesday Shortlist',
+      text: shortlistShareText.value,
+    })
+      .catch(console.error);
+  }
+}
 </script>
 
 <style lang="scss">
@@ -304,11 +331,21 @@ columns.value
   float: left;
   width: 20%;
 }
-.reset-filters {
-  position: absolute;
-  top: 3.5rem;
-  right: 2rem;
+.modal-movies-list .modal-header {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
 }
+  .modal-movies-list .controls {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+  }
 .modal-movies-list .o-table__td {
     vertical-align: middle;
 }
