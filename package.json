@@ -20,7 +20,7 @@
     "cytoscape-layout-utilities": "1.1.1",
     "moviedb-promise": "3.3.1",
     "nuxt": "3.3.3",
-    "sass": "1.60.0",
+    "sass": "1.62.1",
     "stats.js": "0.17.0"
   }
 }
