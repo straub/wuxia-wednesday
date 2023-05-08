@@ -99,15 +99,17 @@
           <OInputitems
             v-else-if="column.field === 'genres'"
             v-model="filters.genres"
-            :data="availableGenres"
+            :data="filteredAvailableGenres"
             :allow-autocomplete="true"
             :allow-new="false"
             :open-on-focus="true"
+            :keep-first="true"
             :before-adding="(genre: string) => availableGenres.includes(genre)"
             icon=""
             variant="info"
             size="small"
             placeholder="Filter..."
+            @typing="(text: string) => genreFilterText = text"
           />
           <OInput
             v-else
@@ -311,6 +313,13 @@ const availableGenres = computed(() => {
     ),
   )
     .sort();
+});
+
+const genreFilterText = ref('');
+
+const filteredAvailableGenres = computed(() => {
+  const text = genreFilterText.value?.toLowerCase();
+  return availableGenres.value.filter(genre => genre?.toLowerCase().includes(text));
 });
 
 interface StringToComputedNumber { [key: string]: ComputedRef<number> }
