@@ -343,8 +343,6 @@ onMounted(async () => {
   addEventListener('popstate', onPopstate);
   onUnmounted(() => removeEventListener('popstate', onPopstate));
 
-  const layoutUtil = cy.layoutUtilities();
-
   if (history.state?.elements?.length > 0) {
     restoreState(history.state);
   } else {
@@ -417,26 +415,47 @@ onMounted(async () => {
   });
 
   /**
-   * @param {cytoscape.NodeSingular} ele
-   * @param {function} cb
+   * @param {cytoscape.NodeSingular} fixedEle
+   * @returns {Promise<void>}
    */
-  function runLayout (ele, cb) {
-    cy.layout({
-      name: 'fcose',
-      nodeDimensionsIncludeLabels: true,
-      fit: false,
-      randomize: false,
-      quality: 'proof',
-      // edgeElasticity: edge => 0.3,
-      // nodeRepulsion: node => 10000,
-      padding,
-      fixedNodeConstraint: ele ? [{ nodeId: ele.id(), position: ele.position() }] : [],
-      stop: () => {
-        saveState();
-        cb();
-      },
-    })
-      .run();
+  async function runLayout (fixedEle) {
+    await new Promise((resolve) => {
+      cy.layout({
+        name: 'fcose',
+        nodeDimensionsIncludeLabels: true,
+        fit: false,
+        randomize: false,
+        quality: 'proof',
+        // // Node repulsion (non overlapping) multiplier
+        // nodeRepulsion: node => 4500,
+        // // Ideal edge (non nested) length
+        // idealEdgeLength: edge => 50,
+        // // Divisor to compute edge forces
+        // edgeElasticity: edge => 0.45,
+        // // Nesting factor (multiplier) to compute ideal edge length for nested edges
+        // nestingFactor: 0.1,
+        // Maximum number of iterations to perform - this is a suggested value and might be adjusted by the algorithm as required
+        numIter: 200,
+        // // Gravity force (constant)
+        // gravity: 0.15,
+        // // Gravity range (constant)
+        // gravityRange: 3.8,
+        // // Initial cooling factor for incremental layout
+        // initialEnergyOnIncremental: 0.3,
+        padding,
+        fixedNodeConstraint: fixedEle
+          ? [{
+              nodeId: fixedEle.id(),
+              position: fixedEle.position(),
+            }]
+          : [],
+        stop: () => {
+          saveState();
+          resolve();
+        },
+      })
+        .run();
+    });
   }
 
   /**
@@ -482,7 +501,7 @@ onMounted(async () => {
             group: 'nodes',
             data: { ...credit, id: `${otherType}:${credit.id}` },
             classes: [otherType],
-            // position: { ...ele.position() },
+            position: { ...ele.position() },
             pannable: true,
           },
         ];
@@ -490,7 +509,7 @@ onMounted(async () => {
       .flat();
 
     const nodesNotInGraph = pageOfNodes
-      .filter(credit => !cy.hasElementWithId(`${otherType}:${credit.id}`));
+      .filter(node => !cy.hasElementWithId(node.data.id));
 
     if (type === 'person') {
       // Fetch additional data on new movies
@@ -506,9 +525,7 @@ onMounted(async () => {
       );
     }
 
-    layoutUtil.placeNewNodes(
-      cy.add(nodesNotInGraph),
-    );
+    cy.add(nodesNotInGraph);
 
     const allValidEdges = credits
       .map((credit) => {
@@ -541,15 +558,12 @@ onMounted(async () => {
     if (nodesNotInGraph.length) {
       await new Promise(resolve => cy.animate({ center: { eles: ele }, complete: resolve }));
 
-      await new Promise((resolve) => {
-        runLayout(
-          ele,
-          () => cy.animate({
-            fit: { eles: mode.value === 'focus' ? neighborhood : undefined, padding },
-            complete: resolve,
-          }),
-        );
-      });
+      await runLayout(ele);
+
+      await new Promise(resolve => cy.animate({
+        fit: { eles: mode.value === 'focus' ? neighborhood : undefined, padding },
+        complete: resolve,
+      }));
     }
 
     return {
