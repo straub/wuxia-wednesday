@@ -37,7 +37,7 @@
       @filtered-movies="(ids) => {
         cy.batch(() => {
           cy.$('.movie').addClass('filtered');
-          ids.forEach(id => cy.getElementById(id).removeClass('filtered'));
+          ids.forEach(id => cy.$id(id).removeClass('filtered'));
         });
       }"
     />
@@ -434,7 +434,7 @@ onMounted(async () => {
   async function expandNode (id, newData = {}, { all = false } = {}) {
     const type = id.split(':')[0];
     const otherType = type === 'movie' ? 'person' : 'movie';
-    const ele = cy.getElementById(id);
+    const ele = cy.$id(id);
     ele.data(newData);
     console.log({ id, type, newData, ele });
 
