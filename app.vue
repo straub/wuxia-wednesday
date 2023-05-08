@@ -309,6 +309,19 @@ onMounted(async () => {
     container: document.getElementById('cy'),
   });
 
+  if (process.env.NODE_ENV === 'development') {
+    const { default: Stats } = await import('stats.js');
+
+    const stats = new Stats();
+    document.body.appendChild(stats.dom);
+
+    function loop () {
+      stats.update();
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+
   const restoreState = ({ elements }) => {
     if (!elements?.length) { return; }
 
