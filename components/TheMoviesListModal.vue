@@ -40,7 +40,7 @@
       show-detail-icon
       custom-detail-row
       detail-key="id"
-      :debounce-search="30"
+      :debounce-search="150"
       :backend-filtering="true"
       @filters-change="(newFilters: Filters) => filters = newFilters"
     >
