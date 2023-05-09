@@ -106,7 +106,6 @@
             :allow-new="false"
             :open-on-focus="true"
             :keep-first="true"
-            :before-adding="(genre: string) => availableGenres.includes(genre)"
             icon=""
             variant="info"
             size="small"
@@ -119,6 +118,9 @@
             :type="column.numeric ? 'number' : 'text'"
             size="small"
             placeholder="Filter..."
+            icon-right="close"
+            icon-right-clickable
+            @icon-right-click="delete filters[column.field]"
           />
         </template>
       </OTableColumn>
