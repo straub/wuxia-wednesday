@@ -25,7 +25,7 @@
           @click.prevent="() => {
             if (table) {
               table.filters = {};
-              Object.keys(savedFilters).forEach(key => delete savedFilters[key]);
+              Object.keys(filters).forEach(key => delete filters[key]);
             }
           }"
         >Reset Filters</a>
@@ -33,7 +33,7 @@
     </div>
     <OTable
       ref="table"
-      :data="rows"
+      :data="filteredRows"
       custom-row-key="id"
       default-sort-direction="desc"
       detailed
@@ -41,6 +41,8 @@
       custom-detail-row
       detail-key="id"
       :debounce-search="30"
+      :backend-filtering="true"
+      @filters-change="(newFilters: Filters) => filters = newFilters"
     >
       <OTableColumn
         v-for="column in columns"
@@ -176,27 +178,18 @@ const table = ref<{ filters: Filters, newData: { id: string }[], newDataTotal: n
 
 const isFiltered = computed(() => table.value?.newDataTotal !== props.movies.length);
 
-const savedFilters: Filters = {};
+const filters = ref<Filters>({});
 
 watch(
   table,
   (newTable) => {
     if (newTable) {
-      newTable.filters = savedFilters;
+      newTable.filters = { ...filters.value };
     }
   },
 );
 
-watch(
-  () => table.value?.newData,
-  (newNewData) => {
-    if (newNewData) {
-      emit('filteredMovies', newNewData.map(r => r.id));
-    }
-  },
-);
-
-const makeCustomRangeSearchFunction = (field: string) => (row: { [x: string]: number; }, input: [number, number]) => {
+const makeCustomRangeSearchFunction = (field: string) => (input: [number, number], row: { [x: string]: number; }) => {
   if (Array.isArray(input)) {
     const [min, max] = input;
     return row[field] <= max && row[field] >= min;
@@ -208,7 +201,7 @@ const columns = ref([
   {
     field: 'star',
     searchable: true,
-    customSearch (row: { star: boolean; }, input: boolean) {
+    customSearch (input: boolean, row: { star: boolean; }) {
       return !input || row.star === input;
     },
   },
@@ -236,7 +229,7 @@ const columns = ref([
     label: 'Genres',
     sortable: true,
     searchable: true,
-    customSearch (row: { genresSet: Set<string>; }, input: string[]) {
+    customSearch (input: string[], row: { genresSet: Set<string>; }) {
       return input && input.every((g: string) => row.genresSet.has(g));
     },
     customFormatter: (value : Genre[]) => `${value?.[0]}`,
@@ -288,6 +281,23 @@ const columns = ref([
 ]);
 type Field = typeof columns.value[number]['field'];
 
+const compiledFilters = computed(() => {
+  const obj: { [x: string]: Function } = {};
+  const filtersValue = filters.value;
+  const columnsValue = columns.value;
+  Object.keys(filtersValue).forEach((key) => {
+    const filterValue = filtersValue[key];
+    if (!filterValue) { return; }
+
+    const filterFunction =
+      columnsValue.find(c => c.field === key)?.customSearch?.bind(null, filterValue) ??
+      (row => String(row[key]).toLowerCase().includes(String(filterValue).toLowerCase()));
+
+    obj[key] = filterFunction;
+  });
+  return obj;
+});
+
 const numberFormatter = new Intl.NumberFormat();
 
 const stars = reactive(new Set<string>());
@@ -302,6 +312,23 @@ const rows = computed(() => props.movies.map((movie: ExtendedMovieResponse) => (
   popularity: movie.popularity && Math.round(movie.popularity),
   cast_num: movie.credits?.cast?.length,
 })));
+
+const filteredRows = computed(() => {
+  const filterFunctions = Object.values(compiledFilters.value);
+  if (!filterFunctions.length) { return rows.value; }
+  console.log('filtering rows', compiledFilters.value);
+  const filteredRows = rows.value.filter(row => filterFunctions.every(f => f(row)));
+  return filteredRows;
+});
+
+watch(
+  filteredRows,
+  (newFilteredRows) => {
+    if (newFilteredRows) {
+      emit('filteredMovies', newFilteredRows.map(r => r.id));
+    }
+  },
+);
 
 const availableGenres = computed(() => {
   return Array.from(
