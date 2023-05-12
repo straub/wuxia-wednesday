@@ -106,6 +106,7 @@
             :allow-new="false"
             :open-on-focus="true"
             :keep-first="true"
+            :confirm-keys="[',','Enter']"
             icon=""
             variant="info"
             size="small"
