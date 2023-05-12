@@ -14,17 +14,14 @@
       @select="async (movie) => {
         if (!movie) return;
         cy.nodes().remove()
-        movie = await fetchMovie(movie.id)
         const id = `movie:${movie.id}`;
-        const ele = cy.add([{
-          data: { ...movie, id },
+        cy.add([{
+          data: { id },
           classes: ['movie', 'foreground'],
           pannable: true,
         }])
-        // await fetchAndExpandNode(id);
-        cy.fit(ele, padding)
-        saveState()
         isSearching = false
+        await fetchAndExpandNode(id);
       }"
     />
     <TheAboutModal v-model:is-showing="isShowingAbout" />
@@ -41,6 +38,34 @@
         });
       }"
     />
+    <TheDebugger>
+      <ul>
+        {{ allMovies.length }} {{ allMovies.length === 1 ? 'movie' : 'movies' }}
+        <a href="#" @click.prevent="() => runLayout()">Run Layout</a>
+        Last Layout Time: {{ lastLayoutTime }}ms
+        <OSlider
+          ref="slider"
+          v-model="layoutOptions.numIter"
+          :min="10"
+          :max="5000"
+          :step="10"
+          variant="info"
+          size="small"
+        />
+        <OSwitch
+          v-model="layoutOptions.nodeDimensionsIncludeLabels"
+          variant="info"
+        />
+        <OSelect v-model="layoutOptions.name">
+          <option value="fcose">
+            fcose
+          </option>
+          <option value="concentric">
+            concentric
+          </option>
+        </OSelect>
+      </ul>
+    </TheDebugger>
     <TheLogo v-model:is-glitching="isGlitching" />
     <div id="toolbar">
       <div class="attribution">
@@ -107,7 +132,7 @@ import fcose from 'cytoscape-fcose';
 import layoutUtilities from 'cytoscape-layout-utilities';
 import cxtmenu from 'cytoscape-cxtmenu';
 import { MovieDb } from 'moviedb-promise';
-import { OLoading, OField, OButton } from '@oruga-ui/oruga-next';
+import { OLoading, OField, OButton, OSlider, OSwitch, OSelect } from '@oruga-ui/oruga-next';
 
 cytoscape.use(fcose);
 cytoscape.use(layoutUtilities);
@@ -166,41 +191,40 @@ const saveState = () => {
   history.pushState({ elements }, '', new URL(location));
 };
 
-onMounted(async () => {
-  const config = {
-    autoungrabify: true,
-    // autolock: true,
-    // autounselectify: true,
-    boxSelectionEnabled: false,
-    style: [
-      {
-        selector: 'node',
-        style: {
-          'background-color': '#666',
-          'background-fill': 'linear-gradient',
-          'background-gradient-stop-colors': '#666 #666 #000 #000 #666 #666',
-          'background-gradient-stop-positions': '0% 48% 48% 52% 52% 100%',
-          'background-gradient-direction': 'to-bottom-left',
-          'background-fit': 'cover',
-          'background-image-crossorigin': 'anonymous',
-          color: '#eee',
-          'font-family': 'Roboto Mono, monospace',
-          'font-size': 10,
-          'min-zoomed-font-size': 8,
-          'text-wrap': 'wrap',
-          'text-max-width': 100,
-          'text-valign': 'bottom',
-          'text-halign': 'center',
-          'text-justification': 'center',
-          'text-margin-x': 0,
-          'text-margin-y': 0,
-        },
+const config = {
+  autoungrabify: true,
+  // autolock: true,
+  // autounselectify: true,
+  boxSelectionEnabled: false,
+  style: [
+    {
+      selector: 'node',
+      style: {
+        'background-color': '#666',
+        'background-fill': 'linear-gradient',
+        'background-gradient-stop-colors': '#666 #666 #000 #000 #666 #666',
+        'background-gradient-stop-positions': '0% 48% 48% 52% 52% 100%',
+        'background-gradient-direction': 'to-bottom-left',
+        'background-fit': 'cover',
+        'background-image-crossorigin': 'anonymous',
+        color: '#eee',
+        'font-family': 'Roboto Mono, monospace',
+        'font-size': 10,
+        'min-zoomed-font-size': 8,
+        'text-wrap': 'wrap',
+        'text-max-width': 100,
+        'text-valign': 'bottom',
+        'text-halign': 'center',
+        'text-justification': 'center',
+        'text-margin-x': 0,
+        'text-margin-y': 0,
       },
-      {
-        selector: 'node.movie',
-        style: {
-          // label: 'data(title)',
-          label: ele => `${
+    },
+    {
+      selector: 'node.movie',
+      style: {
+        // label: 'data(title)',
+        label: ele => `${
             !ele.data('poster_path') || ele.data('original_language') !== 'en'
             ? `${ele.data('title')}\n`
             : ''
@@ -219,130 +243,115 @@ onMounted(async () => {
           }${
             ele.data('runtime') ? `${ele.data('runtime')}m` : ''
           }`,
-          'text-margin-y': 5,
-          width: 45,
-          height: 68,
-          'z-index': 1,
-          shape: 'round-rectangle',
-          'background-image': ele => 'https://image.tmdb.org/t/p/w500' + ele.data('poster_path'),
-        },
+        'text-margin-y': 5,
+        width: 45,
+        height: 68,
+        'z-index': 1,
+        shape: 'round-rectangle',
+        'background-image': ele => 'https://image.tmdb.org/t/p/w500' + ele.data('poster_path'),
       },
-      {
-        selector: 'node.movie[!poster_path]',
-        style: {
-          'text-margin-y': 0,
-          'text-valign': 'center',
-          'background-fill': 'solid',
-          'background-color': '#333',
-          'background-image': null,
-        },
+    },
+    {
+      selector: 'node.movie[!poster_path]',
+      style: {
+        'text-margin-y': 0,
+        'text-valign': 'center',
+        'background-fill': 'solid',
+        'background-color': '#333',
+        'background-image': null,
       },
-      {
-        selector: 'node.person',
-        style: {
-          label: 'data(name)',
-          width: 45,
-          height: 45,
-          'z-index': 2,
-          shape: 'ellipse',
-          'underlay-shape': 'ellipse',
-          'background-image': ele => 'https://image.tmdb.org/t/p/w185' + ele.data('profile_path'),
-          'background-offset-y': '-40%',
-        },
+    },
+    {
+      selector: 'node.person',
+      style: {
+        label: 'data(name)',
+        width: 45,
+        height: 45,
+        'z-index': 2,
+        shape: 'ellipse',
+        'underlay-shape': 'ellipse',
+        'background-image': ele => 'https://image.tmdb.org/t/p/w185' + ele.data('profile_path'),
+        'background-offset-y': '-40%',
       },
-      {
-        selector: 'node.person[!profile_path]',
-        style: {
-          'text-valign': 'center',
-          'background-fill': 'solid',
-          'background-color': '#333',
-          'background-image': null,
-        },
+    },
+    {
+      selector: 'node.person[!profile_path]',
+      style: {
+        'text-valign': 'center',
+        'background-fill': 'solid',
+        'background-color': '#333',
+        'background-image': null,
       },
-      {
-        selector: 'node.foreground',
-        style: {
-          'underlay-color': '#eee',
-          'underlay-padding': '1px',
-          'underlay-opacity': 1.0,
-        },
+    },
+    {
+      selector: 'node.foreground',
+      style: {
+        'underlay-color': '#eee',
+        'underlay-padding': '1px',
+        'underlay-opacity': 1.0,
       },
-      {
-        selector: 'node.background',
-        style: {
-          opacity: 0.9,
-          'transition-property': 'opacity',
-          'transition-duration': '2s',
-        },
+    },
+    {
+      selector: 'node.background',
+      style: {
+        opacity: 0.9,
+        'transition-property': 'opacity',
+        'transition-duration': '2s',
       },
-      {
-        selector: 'node.filtered',
-        style: {
-          opacity: 0.2,
-          'underlay-opacity': 0,
-        },
+    },
+    {
+      selector: 'node.filtered',
+      style: {
+        opacity: 0.2,
+        'underlay-opacity': 0,
       },
-      {
-        selector: 'edge',
-        style: {
-          width: 2,
-          'line-color': '#333',
-          'curve-style': 'straight',
-        },
+    },
+    {
+      selector: 'edge',
+      style: {
+        width: 2,
+        'line-color': '#333',
+        'curve-style': 'straight',
       },
-      {
-        selector: 'edge[billing]',
-        style: {
-          color: '#777',
-          'font-family': 'Roboto Mono, monospace',
-          'font-size': 10,
-          'min-zoomed-font-size': 20,
-          'target-text-offset': 20,
-          'target-label': 'data(billing)',
-        },
+    },
+    {
+      selector: 'edge[billing]',
+      style: {
+        color: '#777',
+        'font-family': 'Roboto Mono, monospace',
+        'font-size': 10,
+        'min-zoomed-font-size': 20,
+        'target-text-offset': 20,
+        'target-label': 'data(billing)',
       },
-    ],
-  };
+    },
+  ],
+};
 
-  cy = cytoscape({
-    ...config,
-    container: document.getElementById('cy'),
-  });
+cy = cytoscape(config);
 
-  if (process.env.NODE_ENV === 'development') {
-    const { default: Stats } = await import('stats.js');
+const restoreState = ({ elements }) => {
+  if (!elements?.length) { return; }
 
-    const stats = new Stats();
-    document.body.appendChild(stats.dom);
+  cy.elements().remove();
 
-    function loop () {
-      stats.update();
-      requestAnimationFrame(loop);
-    }
-    requestAnimationFrame(loop);
-  }
+  console.log('restoring', { elements });
 
-  const restoreState = ({ elements }) => {
-    if (!elements?.length) { return; }
+  cy.add(elements);
 
-    cy.elements().remove();
+  allMovies.value = cy.$('.movie').map(ele => ele.data());
+};
 
-    console.log('restoring', { elements });
+const onPopstate = ({ state }) => {
+  if (!state) { return; }
+  restoreState(state);
+  fitOrFocus();
+};
 
-    cy.add(elements);
+onMounted(() => addEventListener('popstate', onPopstate));
+onUnmounted(() => removeEventListener('popstate', onPopstate));
 
-    allMovies.value = cy.$('.movie').map(ele => ele.data());
-  };
-
-  const onPopstate = ({ state }) => {
-    if (!state) { return; }
-    restoreState(state);
-    fitOrFocus();
-  };
-
-  addEventListener('popstate', onPopstate);
-  onUnmounted(() => removeEventListener('popstate', onPopstate));
-
+onMounted(async () => {
   if (history.state?.elements?.length > 0) {
     restoreState(history.state);
   } else {
@@ -373,16 +382,260 @@ onMounted(async () => {
 
     saveState();
   }
+});
 
-  fitOrFocus();
-  isLoading.value = false;
+fitOrFocus();
+isLoading.value = false;
 
-  const openDetails = (id) => {
-    if (id.startsWith('movie:') || id.startsWith('person:')) {
-      window.open(`https://www.themoviedb.org/${id.replace(':', '/')}`);
-    }
+const openDetails = (id) => {
+  if (id.startsWith('movie:') || id.startsWith('person:')) {
+    window.open(`https://www.themoviedb.org/${id.replace(':', '/')}`);
+  }
+};
+
+const layoutOptions = reactive({
+  name: 'fcose',
+  nodeDimensionsIncludeLabels: true,
+  fit: false,
+  randomize: false,
+  quality: 'proof',
+  // // Node repulsion (non overlapping) multiplier
+  // nodeRepulsion: node => 4500,
+  // // Ideal edge (non nested) length
+  // idealEdgeLength: edge => 50,
+  // // Divisor to compute edge forces
+  // edgeElasticity: edge => 0.45,
+  // // Nesting factor (multiplier) to compute ideal edge length for nested edges
+  // nestingFactor: 0.1,
+  // Maximum number of iterations to perform - this is a suggested value and might be adjusted by the algorithm as required
+  numIter: 200,
+  // // Gravity force (constant)
+  // gravity: 0.15,
+  // // Gravity range (constant)
+  // gravityRange: 3.8,
+  // // Initial cooling factor for incremental layout
+  // initialEnergyOnIncremental: 0.3,
+});
+
+const lastLayoutTime = ref(0);
+
+/**
+   * @param {cytoscape.NodeSingular} fixedEle
+   * @returns {Promise<void>}
+   */
+async function runLayout (fixedEle) {
+  console.log({ layoutOptions });
+  await new Promise((resolve) => {
+    const start = Date.now();
+    cy.layout({
+      ...layoutOptions,
+      padding,
+      fixedNodeConstraint: fixedEle
+        ? [{
+            nodeId: fixedEle.id(),
+            position: fixedEle.position(),
+          }]
+        : [],
+      stop: () => {
+        lastLayoutTime.value = Date.now() - start;
+        saveState();
+        resolve();
+      },
+    })
+      .run();
+  });
+}
+
+/**
+   * @param {string} id
+   * @param {Object} [newData]
+   * @param {Object} [options]
+   */
+async function expandNode (id, newData = {}, { all = false } = {}) {
+  const type = id.split(':')[0];
+  const otherType = type === 'movie' ? 'person' : 'movie';
+  const ele = cy.$id(id);
+  ele.data(newData);
+  console.log({ id, type, newData, ele });
+
+  const currentPage = ele.data('currentPage') ?? 0;
+  ele.data('currentPage', currentPage + 1);
+
+  const credits = [
+    ...(newData.credits ?? newData.movie_credits).cast,
+    // ...(newData.credits ?? newData.movie_credits).crew,
+  ];
+
+  const perPage = 10;
+
+  const pageOfNodes = credits
+  // .sort((a, b) => b.vote_average - a.vote_average)
+    .filter((credit) => {
+      let include = true;
+      if (credit.vote_count !== undefined) {
+        include &&= credit.vote_count >= 50;
+      }
+      // FIXME: credits movies don't have `runtime`
+      if (credit.runtime !== undefined) {
+        include &&= credit.runtime >= 45;
+      }
+      return include;
+    })
+    .sort((a, b) => b.popularity - a.popularity)
+    .slice(all ? 0 : currentPage * perPage, all ? undefined : (currentPage + 1) * perPage)
+    .map((credit) => {
+      return [
+        {
+          group: 'nodes',
+          data: { ...credit, id: `${otherType}:${credit.id}` },
+          classes: [otherType],
+          position: { ...ele.position() },
+          pannable: true,
+        },
+      ];
+    })
+    .flat();
+
+  const nodesNotInGraph = pageOfNodes
+    .filter(node => !cy.hasElementWithId(node.data.id));
+
+  if (type === 'person') {
+    // Fetch additional data on new movies
+    await Promise.all(
+      nodesNotInGraph.map(async (node) => {
+        const movie = await fetchMovie(node.data.id.replace('movie:', ''));
+
+        node.data = {
+          ...movie,
+          ...node.data,
+        };
+      }),
+    );
+  }
+
+  cy.add(nodesNotInGraph);
+
+  const allValidEdges = credits
+    .map((credit) => {
+      const movie = type === 'movie' ? newData : credit;
+      const person = type === 'person' ? newData : credit;
+
+      return [
+        {
+          group: 'edges',
+          data: {
+            id: `movie:${movie.id}-person:${person.id}`,
+            source: `movie:${movie.id}`,
+            target: `person:${person.id}`,
+            billing: !isNaN(credit.order) ? `#${credit.order + 1}` : credit.job,
+          },
+        },
+      ];
+    })
+    .flat()
+    .filter(edge => cy.hasElementWithId(edge.data.source) && cy.hasElementWithId(edge.data.target));
+
+  cy.add(allValidEdges);
+
+  // Highlight neighborhood of expanded node
+  cy.nodes().addClass('background').removeClass('foreground');
+  const neighborhood = ele.closedNeighborhood();
+  neighborhood.removeClass('background').addClass('foreground');
+
+  // Only animate and layout if we added new nodes
+  if (nodesNotInGraph.length) {
+    await new Promise(resolve => cy.animate({ center: { eles: ele }, complete: resolve }));
+
+    await runLayout(ele);
+
+    await new Promise(resolve => cy.animate({
+      fit: { eles: mode.value === 'focus' ? neighborhood : undefined, padding },
+      complete: resolve,
+    }));
+  }
+
+  return {
+    // This means we've run out of "pages".
+    fullyExpanded: !pageOfNodes.length,
   };
+}
 
+async function fetchAndExpandNode (id, options = {}) {
+  if (id.startsWith('movie:')) {
+    const movie = await fetchMovie(id);
+    return await expandNode(id, movie, options);
+  } else if (id.startsWith('person:')) {
+    const person = await fetchPerson(id);
+    return await expandNode(id, person, options);
+  }
+}
+
+watch(isAutoModeRunning, () => {
+  if (isAutoModeRunning.value) {
+    async function expandPersonNodes () {
+      let allFullyExpanded = true;
+
+      for (const node of cy.$('.person')) {
+        if (!isAutoModeRunning.value) { break; }
+
+        const id = node.id();
+
+        const { fullyExpanded } = await fetchAndExpandNode(id);
+
+        allFullyExpanded &&= fullyExpanded;
+      }
+
+      if (allFullyExpanded) {
+        isAutoModeRunning.value = false;
+        cy.animate({
+          fit: { eles: undefined, padding },
+        });
+      }
+
+      if (isAutoModeRunning.value) {
+        expandPersonNodes();
+      } else {
+        saveState();
+      }
+    }
+    expandPersonNodes();
+  }
+});
+
+cy
+  .on('onetap', 'node', async (evt) => {
+    const node = evt.target;
+    const id = node.id();
+    console.log('onetapped ' + id);
+
+    try {
+      isLoading.value = true;
+
+      await fetchAndExpandNode(id);
+    } finally {
+      isLoading.value = false;
+    }
+  })
+  .on('dbltap', 'node', (evt) => {
+    const node = evt.target;
+    const id = node.id();
+    console.log('dbltapped ' + id);
+
+    openDetails(id);
+  })
+  .on('mouseover', 'node', (evt) => {
+    const node = evt.target;
+    cursor.value = 'pointer';
+    title.value = node.data('title') ?? node.data('name') ?? '';
+  })
+  .on('mouseout', 'node', () => {
+    cursor.value = 'inherit';
+    title.value = '';
+  });
+
+onMounted(() => cy.mount(document.getElementById('cy')));
+
+onMounted(() => {
   cy.cxtmenu({
     commands: [
       {
@@ -413,237 +666,6 @@ onMounted(async () => {
       },
     ],
   });
-
-  /**
-   * @param {cytoscape.NodeSingular} fixedEle
-   * @returns {Promise<void>}
-   */
-  async function runLayout (fixedEle) {
-    await new Promise((resolve) => {
-      cy.layout({
-        name: 'fcose',
-        nodeDimensionsIncludeLabels: true,
-        fit: false,
-        randomize: false,
-        quality: 'proof',
-        // // Node repulsion (non overlapping) multiplier
-        // nodeRepulsion: node => 4500,
-        // // Ideal edge (non nested) length
-        // idealEdgeLength: edge => 50,
-        // // Divisor to compute edge forces
-        // edgeElasticity: edge => 0.45,
-        // // Nesting factor (multiplier) to compute ideal edge length for nested edges
-        // nestingFactor: 0.1,
-        // Maximum number of iterations to perform - this is a suggested value and might be adjusted by the algorithm as required
-        numIter: 200,
-        // // Gravity force (constant)
-        // gravity: 0.15,
-        // // Gravity range (constant)
-        // gravityRange: 3.8,
-        // // Initial cooling factor for incremental layout
-        // initialEnergyOnIncremental: 0.3,
-        padding,
-        fixedNodeConstraint: fixedEle
-          ? [{
-              nodeId: fixedEle.id(),
-              position: fixedEle.position(),
-            }]
-          : [],
-        stop: () => {
-          saveState();
-          resolve();
-        },
-      })
-        .run();
-    });
-  }
-
-  /**
-   * @param {string} id
-   * @param {Object} [newData]
-   * @param {Object} [options]
-   */
-  async function expandNode (id, newData = {}, { all = false } = {}) {
-    const type = id.split(':')[0];
-    const otherType = type === 'movie' ? 'person' : 'movie';
-    const ele = cy.$id(id);
-    ele.data(newData);
-    console.log({ id, type, newData, ele });
-
-    const currentPage = ele.data('currentPage') ?? 0;
-    ele.data('currentPage', currentPage + 1);
-
-    const credits = [
-      ...(newData.credits ?? newData.movie_credits).cast,
-      // ...(newData.credits ?? newData.movie_credits).crew,
-    ];
-
-    const perPage = 10;
-
-    const pageOfNodes = credits
-      // .sort((a, b) => b.vote_average - a.vote_average)
-      .filter((credit) => {
-        let include = true;
-        if (credit.vote_count !== undefined) {
-          include &&= credit.vote_count >= 50;
-        }
-        // FIXME: credits movies don't have `runtime`
-        if (credit.runtime !== undefined) {
-          include &&= credit.runtime >= 45;
-        }
-        return include;
-      })
-      .sort((a, b) => b.popularity - a.popularity)
-      .slice(all ? 0 : currentPage * perPage, all ? undefined : (currentPage + 1) * perPage)
-      .map((credit) => {
-        return [
-          {
-            group: 'nodes',
-            data: { ...credit, id: `${otherType}:${credit.id}` },
-            classes: [otherType],
-            position: { ...ele.position() },
-            pannable: true,
-          },
-        ];
-      })
-      .flat();
-
-    const nodesNotInGraph = pageOfNodes
-      .filter(node => !cy.hasElementWithId(node.data.id));
-
-    if (type === 'person') {
-      // Fetch additional data on new movies
-      await Promise.all(
-        nodesNotInGraph.map(async (node) => {
-          const movie = await fetchMovie(node.data.id.replace('movie:', ''));
-
-          node.data = {
-            ...movie,
-            ...node.data,
-          };
-        }),
-      );
-    }
-
-    cy.add(nodesNotInGraph);
-
-    const allValidEdges = credits
-      .map((credit) => {
-        const movie = type === 'movie' ? newData : credit;
-        const person = type === 'person' ? newData : credit;
-
-        return [
-          {
-            group: 'edges',
-            data: {
-              id: `movie:${movie.id}-person:${person.id}`,
-              source: `movie:${movie.id}`,
-              target: `person:${person.id}`,
-              billing: !isNaN(credit.order) ? `#${credit.order + 1}` : credit.job,
-            },
-          },
-        ];
-      })
-      .flat()
-      .filter(edge => cy.hasElementWithId(edge.data.source) && cy.hasElementWithId(edge.data.target));
-
-    cy.add(allValidEdges);
-
-    // Highlight neighborhood of expanded node
-    cy.nodes().addClass('background').removeClass('foreground');
-    const neighborhood = ele.closedNeighborhood();
-    neighborhood.removeClass('background').addClass('foreground');
-
-    // Only animate and layout if we added new nodes
-    if (nodesNotInGraph.length) {
-      await new Promise(resolve => cy.animate({ center: { eles: ele }, complete: resolve }));
-
-      await runLayout(ele);
-
-      await new Promise(resolve => cy.animate({
-        fit: { eles: mode.value === 'focus' ? neighborhood : undefined, padding },
-        complete: resolve,
-      }));
-    }
-
-    return {
-      // This means we've run out of "pages".
-      fullyExpanded: !pageOfNodes.length,
-    };
-  }
-
-  async function fetchAndExpandNode (id, options = {}) {
-    if (id.startsWith('movie:')) {
-      const movie = await fetchMovie(id);
-      return await expandNode(id, movie, options);
-    } else if (id.startsWith('person:')) {
-      const person = await fetchPerson(id);
-      return await expandNode(id, person, options);
-    }
-  }
-
-  watch(isAutoModeRunning, () => {
-    if (isAutoModeRunning.value) {
-      async function expandPersonNodes () {
-        let allFullyExpanded = true;
-
-        for (const node of cy.$('.person')) {
-          if (!isAutoModeRunning.value) { break; }
-
-          const id = node.id();
-
-          const { fullyExpanded } = await fetchAndExpandNode(id);
-
-          allFullyExpanded &&= fullyExpanded;
-        }
-
-        if (allFullyExpanded) {
-          isAutoModeRunning.value = false;
-          cy.animate({
-            fit: { eles: undefined, padding },
-          });
-        }
-
-        if (isAutoModeRunning.value) {
-          expandPersonNodes();
-        } else {
-          saveState();
-        }
-      }
-      expandPersonNodes();
-    }
-  });
-
-  cy
-    .on('onetap', 'node', async (evt) => {
-      const node = evt.target;
-      const id = node.id();
-      console.log('onetapped ' + id);
-
-      try {
-        isLoading.value = true;
-
-        await fetchAndExpandNode(id);
-      } finally {
-        isLoading.value = false;
-      }
-    })
-    .on('dbltap', 'node', (evt) => {
-      const node = evt.target;
-      const id = node.id();
-      console.log('dbltapped ' + id);
-
-      openDetails(id);
-    })
-    .on('mouseover', 'node', (evt) => {
-      const node = evt.target;
-      cursor.value = 'pointer';
-      title.value = node.data('title') ?? node.data('name') ?? '';
-    })
-    .on('mouseout', 'node', () => {
-      cursor.value = 'inherit';
-      title.value = '';
-    });
 });
 </script>
 
@@ -665,6 +687,7 @@ onMounted(async () => {
   $table-color: #fff,
   $table-th-color: #bbb,
   $table-detail-chevron-color: #bbb,
+  $sidebar-content-background-color: #111,
 );
 @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400&display=swap');
 
