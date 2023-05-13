@@ -152,6 +152,7 @@
       indefinite
     >
       Auto Mode is complete!
+      Found {{ allMovies.length }} movies in {{ (lastAutoModeTime / 1000 / 60).toFixed(1) }} minutes.
     </ONotification>
   </div>
 </template>
@@ -516,10 +517,12 @@ async function fetchAndExpandNode (id, options = {}) {
 }
 
 const isAutoModeComplete = ref(false);
+const lastAutoModeTime = ref(0);
 
 watch(isAutoModeRunning, () => {
   if (isAutoModeRunning.value) {
     isAutoModeComplete.value = false;
+    const autoModeStartTime = Date.now();
 
     async function expandPersonNodes () {
       let allFullyExpanded = true;
@@ -545,6 +548,7 @@ watch(isAutoModeRunning, () => {
       if (isAutoModeRunning.value) {
         expandPersonNodes();
       } else {
+        lastAutoModeTime.value = Date.now() - autoModeStartTime;
         saveState();
       }
     }
