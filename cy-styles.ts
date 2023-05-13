@@ -14,7 +14,7 @@ export default [
       color: '#eee',
       'font-family': 'Roboto Mono, monospace',
       'font-size': 10,
-      'min-zoomed-font-size': 8,
+      'min-zoomed-font-size': 12,
       'text-wrap': 'wrap',
       'text-max-width': 100,
       'text-valign': 'bottom',

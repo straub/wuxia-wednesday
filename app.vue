@@ -335,8 +335,6 @@ const layoutOptions = reactive({
   // Divisor to compute edge forces
   // edgeElasticity: edge => 0.45,
   edgeElasticity: 0.1,
-  // Nesting factor (multiplier) to compute ideal edge length for nested edges
-  nestingFactor: 0.1,
   // // Maximum number of iterations to perform - this is a suggested value and might be adjusted by the algorithm as required
   // numIter: 2500,
   // Gravity force (constant)
