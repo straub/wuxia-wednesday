@@ -524,9 +524,11 @@ async function expandNode (id, newData = {}, { all = false } = {}) {
     if (!isContinuousLayoutRunning.value) {
       await runLayout(ele);
 
-      cy.one('layoutstop', () => saveState());
+      saveState();
 
       await fitOrFocus();
+    } else {
+      cy.one('layoutstop', () => saveState());
     }
   }
 
