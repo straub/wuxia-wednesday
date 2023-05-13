@@ -142,6 +142,18 @@
         <!-- <OButton @click="" size="small" title="Settings" icon-right="cog-outline"></OButton> -->
       </OField>
     </div>
+    <ONotification
+      v-model:active="isAutoModeComplete"
+      variant="info"
+      position="top"
+      has-icon
+      icon="auto-mode"
+      icon-size="small"
+      closable
+      indefinite
+    >
+      Auto Mode is complete!
+    </ONotification>
   </div>
 </template>
 
@@ -151,7 +163,7 @@ import fcose from 'cytoscape-fcose';
 import layoutUtilities from 'cytoscape-layout-utilities';
 import cxtmenu from 'cytoscape-cxtmenu';
 import { MovieDb } from 'moviedb-promise';
-import { OField, OButton, OInput, OSwitch, OSelect } from '@oruga-ui/oruga-next';
+import { OField, OButton, OInput, OSwitch, OSelect, ONotification } from '@oruga-ui/oruga-next';
 import cyStyles from './cy-styles.ts';
 
 cyUse(fcose);
@@ -498,8 +510,12 @@ async function fetchAndExpandNode (id, options = {}) {
   }
 }
 
+const isAutoModeComplete = ref(false);
+
 watch(isAutoModeRunning, () => {
   if (isAutoModeRunning.value) {
+    isAutoModeComplete.value = false;
+
     async function expandPersonNodes () {
       let allFullyExpanded = true;
 
@@ -518,6 +534,7 @@ watch(isAutoModeRunning, () => {
         cy.animate({
           fit: { eles: undefined, padding },
         });
+        isAutoModeComplete.value = true;
       }
 
       if (isAutoModeRunning.value) {
@@ -675,5 +692,11 @@ body {
 }
 .o-icon {
   vertical-align: bottom;
+}
+.o-notification--top {
+    position: fixed;
+    top: 1rem;
+    left: 50%;
+    transform: translate(-50%);
 }
 </style>
