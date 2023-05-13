@@ -15,6 +15,7 @@
         if (!movie) return;
         cy.nodes().remove()
         const id = `movie:${movie.id}`;
+        originMovieId = id;
         cy.add([{
           data: { id },
           classes: ['movie', 'foreground'],
@@ -350,6 +351,8 @@ const onPopstate = ({ state }) => {
 onMounted(() => addEventListener('popstate', onPopstate));
 onUnmounted(() => removeEventListener('popstate', onPopstate));
 
+const originMovieId = ref();
+
 onMounted(async () => {
   loadingCount.value++;
 
@@ -367,6 +370,7 @@ onMounted(async () => {
     console.log({ initialMovie });
 
     const initialId = `movie:${initialMovie.id}`;
+    originMovieId.value = initialId;
 
     const elements = [
       {
@@ -429,12 +433,18 @@ async function runLayout (fixedEle) {
     cy.layout({
       ...layoutOptions,
       padding,
-      fixedNodeConstraint: fixedEle
-        ? [{
-            nodeId: fixedEle.id(),
-            position: fixedEle.position(),
-          }]
-        : [],
+      fixedNodeConstraint: [
+        {
+          nodeId: originMovieId.value,
+          position: { x: 0, y: 0 },
+        },
+        ...(fixedEle
+          ? [{
+              nodeId: fixedEle.id(),
+              position: fixedEle.position(),
+            }]
+          : []),
+      ],
       stop: () => {
         lastLayoutTime.value = Date.now() - start;
         resolve();
