@@ -4,13 +4,22 @@
     data-text="Wuxia Wednesday"
   >
     Wuxia Wednesday
+    <OIcon
+      v-if="isLoading"
+      icon="loading"
+      spin
+      size="medium"
+    />
   </h1>
 </template>
 
 <script setup lang="ts">
-const props = defineProps({
+import { OIcon } from '@oruga-ui/oruga-next';
+
+const props = defineProps<{
   isGlitching: Boolean,
-});
+  isLoading: Boolean,
+}>();
 const emit = defineEmits(['update:isGlitching']);
 
 watch(() => props.isGlitching, (newValue) => {

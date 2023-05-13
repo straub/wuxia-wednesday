@@ -66,7 +66,10 @@
         </OSelect>
       </ul>
     </TheDebugger>
-    <TheLogo v-model:is-glitching="isGlitching" />
+    <TheLogo
+      v-model:is-glitching="isGlitching"
+      :is-loading="loadingCount > 0"
+    />
     <div id="toolbar">
       <div class="attribution">
         Data from&nbsp;<a
@@ -119,10 +122,6 @@
         <!-- <OButton @click="" size="small" title="Settings" icon-right="cog-outline"></OButton> -->
       </OField>
     </div>
-    <OLoading
-      v-model:active="isLoading"
-      full-page
-    />
   </div>
 </template>
 
@@ -132,7 +131,7 @@ import fcose from 'cytoscape-fcose';
 import layoutUtilities from 'cytoscape-layout-utilities';
 import cxtmenu from 'cytoscape-cxtmenu';
 import { MovieDb } from 'moviedb-promise';
-import { OLoading, OField, OButton, OSlider, OSwitch, OSelect } from '@oruga-ui/oruga-next';
+import { OField, OButton, OSlider, OSwitch, OSelect } from '@oruga-ui/oruga-next';
 
 cytoscape.use(fcose);
 cytoscape.use(layoutUtilities);
@@ -143,7 +142,7 @@ let cy;
 
 const moviedb = new MovieDb('b95ecffb4e929829fbc815288785b66e');
 
-const isLoading = ref(true);
+const loadingCount = ref(0);
 const isSearching = ref(false);
 const isShowingAbout = ref(false);
 const isShowingMoviesList = ref(false);
@@ -352,6 +351,8 @@ onMounted(() => addEventListener('popstate', onPopstate));
 onUnmounted(() => removeEventListener('popstate', onPopstate));
 
 onMounted(async () => {
+  loadingCount.value++;
+
   if (history.state?.elements?.length > 0) {
     restoreState(history.state);
   } else {
@@ -382,10 +383,10 @@ onMounted(async () => {
 
     saveState();
   }
-});
 
-fitOrFocus();
-isLoading.value = false;
+  fitOrFocus();
+  loadingCount.value--;
+});
 
 const openDetails = (id) => {
   if (id.startsWith('movie:') || id.startsWith('person:')) {
@@ -564,12 +565,18 @@ async function expandNode (id, newData = {}, { all = false } = {}) {
 }
 
 async function fetchAndExpandNode (id, options = {}) {
-  if (id.startsWith('movie:')) {
-    const movie = await fetchMovie(id);
-    return await expandNode(id, movie, options);
-  } else if (id.startsWith('person:')) {
-    const person = await fetchPerson(id);
-    return await expandNode(id, person, options);
+  try {
+    loadingCount.value++;
+
+    if (id.startsWith('movie:')) {
+      const movie = await fetchMovie(id);
+      return await expandNode(id, movie, options);
+    } else if (id.startsWith('person:')) {
+      const person = await fetchPerson(id);
+      return await expandNode(id, person, options);
+    }
+  } finally {
+    loadingCount.value--;
   }
 }
 
@@ -611,13 +618,7 @@ cy
     const id = node.id();
     console.log('onetapped ' + id);
 
-    try {
-      isLoading.value = true;
-
-      await fetchAndExpandNode(id);
-    } finally {
-      isLoading.value = false;
-    }
+    await fetchAndExpandNode(id);
   })
   .on('dbltap', 'node', (evt) => {
     const node = evt.target;
@@ -727,21 +728,17 @@ body {
   bottom: 1.5rem;
   right: 1rem;
 
-  & .attribution {
+  .attribution {
     // There's almost certainly a better way to do this...
     position: fixed;
     right: 1rem;
     bottom: 3.5rem;
   }
 
-  & .o-field {
+  .o-field {
     display: inline-block;
     margin-bottom: 0;
   }
-}
-
-.o-load__overlay {
-  background: rgba(0, 0, 0, 0.3);
 }
 
 .isAutoModeRunning svg {
@@ -755,5 +752,8 @@ body {
   to {
     transform: rotate(1turn);
   }
+}
+.o-icon {
+  vertical-align: bottom;
 }
 </style>
