@@ -42,6 +42,12 @@
       <div>{{ allMovies.length }} {{ allMovies.length === 1 ? 'movie' : 'movies' }}</div>
       <div><a href="#" @click.prevent="() => runLayout()">Run Layout</a></div>
       <div>Last Layout Time: {{ lastLayoutTime }}ms</div>
+      <OField label="Continuous Layout">
+        <OSwitch
+          v-model="isContinuousLayoutRunning"
+          variant="info"
+        />
+      </OField>
       <OField
         v-for="key in Object.keys(layoutOptions)"
         :key="key"
@@ -222,9 +228,16 @@ if (import.meta.hot) {
   });
 }
 
-const fitOrFocus = () => mode.value === 'fit'
-  ? cy.fit(undefined, padding)
-  : cy.fit(cy.$('node.foreground'), padding);
+const fitOrFocus = async (instant = false) => {
+  if (instant) {
+    cy.fit(mode.value === 'focus' ? cy.$('node.foreground') : undefined, padding);
+  } else {
+    await new Promise(resolve => cy.animate({
+      fit: { eles: mode.value === 'focus' ? cy.$('node.foreground') : undefined, padding },
+      complete: resolve,
+    }));
+  }
+};
 
 const saveState = () => {
   allMovies.value = cy.$('.movie').map(ele => ele.data());
@@ -247,7 +260,7 @@ const restoreState = ({ elements }) => {
 
   cy.add(elements);
 
-  fitOrFocus();
+  fitOrFocus(true);
 
   allMovies.value = cy.$('.movie').map(ele => ele.data());
 };
@@ -292,7 +305,6 @@ onMounted(async () => {
     await fetchAndExpandNode(initialId);
   }
 
-  fitOrFocus();
   loadingCount.value--;
 });
 
@@ -325,8 +337,8 @@ const layoutOptions = reactive({
   edgeElasticity: 0.1,
   // Nesting factor (multiplier) to compute ideal edge length for nested edges
   nestingFactor: 0.1,
-  // Maximum number of iterations to perform - this is a suggested value and might be adjusted by the algorithm as required
-  numIter: 200,
+  // // Maximum number of iterations to perform - this is a suggested value and might be adjusted by the algorithm as required
+  // numIter: 2500,
   // Gravity force (constant)
   gravity: 0.15,
   // Gravity range (constant)
@@ -344,7 +356,7 @@ const lastLayoutTime = ref(0);
    * @returns {Promise<void>}
    */
 async function runLayout (fixedEle) {
-  console.log({ layoutOptions });
+  // console.log({ layoutOptions });
   await new Promise((resolve) => {
     const start = Date.now();
     cy.layout({
@@ -377,6 +389,23 @@ async function runLayout (fixedEle) {
       .run();
   });
 }
+
+const isContinuousLayoutRunning = ref(false);
+
+watch(isContinuousLayoutRunning, () => {
+  if (isContinuousLayoutRunning.value) {
+    async function runContinuousLayout () {
+      await runLayout();
+
+      if (isContinuousLayoutRunning.value) {
+        requestAnimationFrame(runContinuousLayout);
+      }
+    }
+    runContinuousLayout();
+  }
+}, { immediate: true });
+
+onUnmounted(() => (isContinuousLayoutRunning.value = false));
 
 /**
    * @param {string} id
@@ -485,14 +514,13 @@ async function expandNode (id, newData = {}, { all = false } = {}) {
   if (elesAdded.length) {
     await new Promise(resolve => cy.animate({ center: { eles: ele }, complete: resolve }));
 
-    await runLayout(ele);
+    if (!isContinuousLayoutRunning.value) {
+      await runLayout(ele);
 
-    saveState();
+      cy.one('layoutstop', () => saveState());
 
-    await new Promise(resolve => cy.animate({
-      fit: { eles: mode.value === 'focus' ? neighborhood : undefined, padding },
-      complete: resolve,
-    }));
+      await fitOrFocus();
+    }
   }
 
   return {
@@ -523,6 +551,7 @@ const lastAutoModeTime = ref(0);
 watch(isAutoModeRunning, () => {
   if (isAutoModeRunning.value) {
     isAutoModeComplete.value = false;
+    isContinuousLayoutRunning.value = true;
     const autoModeStartTime = Date.now();
 
     async function expandPersonNodes () {
@@ -549,6 +578,7 @@ watch(isAutoModeRunning, () => {
       if (isAutoModeRunning.value) {
         expandPersonNodes();
       } else {
+        isContinuousLayoutRunning.value = false;
         lastAutoModeTime.value = Date.now() - autoModeStartTime;
         saveState();
       }
@@ -556,6 +586,8 @@ watch(isAutoModeRunning, () => {
     expandPersonNodes();
   }
 });
+
+onUnmounted(() => (isAutoModeRunning.value = false));
 
 cy
   .on('onetap', 'node', async (evt) => {
