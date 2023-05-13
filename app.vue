@@ -40,13 +40,17 @@
       }"
     />
     <TheDebugger>
-      <ul>
-        {{ allMovies.length }} {{ allMovies.length === 1 ? 'movie' : 'movies' }}
-        <a href="#" @click.prevent="() => runLayout()">Run Layout</a>
-        Last Layout Time: {{ lastLayoutTime }}ms
+      <div>{{ allMovies.length }} {{ allMovies.length === 1 ? 'movie' : 'movies' }}</div>
+      <div><a href="#" @click.prevent="() => runLayout()">Run Layout</a></div>
+      <div>Last Layout Time: {{ lastLayoutTime }}ms</div>
+      <OField
+        v-for="key in Object.keys(layoutOptions)"
+        :key="key"
+        :label="key"
+      >
         <OSlider
-          ref="slider"
-          v-model="layoutOptions.numIter"
+          v-if="key === 'numIter'"
+          v-model="layoutOptions[key]"
           :min="10"
           :max="5000"
           :step="10"
@@ -54,18 +58,33 @@
           size="small"
         />
         <OSwitch
-          v-model="layoutOptions.nodeDimensionsIncludeLabels"
+          v-else-if="(typeof layoutOptions[key]) === 'boolean'"
+          v-model="layoutOptions[key]"
           variant="info"
         />
-        <OSelect v-model="layoutOptions.name">
-          <option value="fcose">
-            fcose
-          </option>
-          <option value="concentric">
-            concentric
-          </option>
+        <OSelect
+          v-else-if="key === 'name'"
+          v-model="layoutOptions[key]"
+        >
+          <option
+            v-for="value in ['fcose','concentric']"
+            :key="value"
+            :value="value"
+            v-text="value"
+          />
         </OSelect>
-      </ul>
+        <OSelect
+          v-else-if="key === 'quality'"
+          v-model="layoutOptions[key]"
+        >
+          <option
+            v-for="value in ['draft','default','proof']"
+            :key="value"
+            :value="value"
+            v-text="value"
+          />
+        </OSelect>
+      </OField>
     </TheDebugger>
     <TheLogo
       v-model:is-glitching="isGlitching"
@@ -402,6 +421,12 @@ const layoutOptions = reactive({
   fit: false,
   randomize: false,
   quality: 'proof',
+  // // Whether or not to animate the layout
+  // animate: true,
+  // // Duration of animation in ms, if enabled
+  // animationDuration: 1000,
+  // // Easing of animation, if enabled
+  // animationEasing: undefined,
   // // Node repulsion (non overlapping) multiplier
   // nodeRepulsion: node => 4500,
   // // Ideal edge (non nested) length
@@ -445,10 +470,8 @@ async function runLayout (fixedEle) {
             }]
           : []),
       ],
-      stop: () => {
-        lastLayoutTime.value = Date.now() - start;
-        resolve();
-      },
+      ready: () => (lastLayoutTime.value = Date.now() - start),
+      stop: resolve,
     })
       .run();
   });

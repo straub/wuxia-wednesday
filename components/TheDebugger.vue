@@ -6,6 +6,7 @@
     :overlay="false"
     :right="true"
     :can-cancel="false"
+    class="the-debugger"
   >
     <div v-if="isOpen">
       <slot />
@@ -18,27 +19,36 @@ import { OSidebar } from '@oruga-ui/oruga-next';
 
 const isOpen = ref(false);
 
+const { default: Stats } = await import('stats.js');
+
+const stats = new Stats();
+
+function loop () {
+  stats.update();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
 const keyComboHandler = ({ ctrlKey, altKey, shiftKey, key }: KeyboardEvent) => {
   if (ctrlKey && altKey && shiftKey && key === 'D') {
     isOpen.value = !isOpen.value;
+
+    if (isOpen.value) {
+      document.body.appendChild(stats.dom);
+    } else {
+      stats.dom.remove();
+    }
   }
 };
 
 onMounted(() => window.addEventListener('keydown', keyComboHandler));
 onUnmounted(() => window.removeEventListener('keydown', keyComboHandler));
-
-if (process.env.NODE_ENV === 'development') {
-  const { default: Stats } = await import('stats.js');
-
-  const stats = new Stats();
-
-  function loop () {
-    stats.update();
-    requestAnimationFrame(loop);
-  }
-  requestAnimationFrame(loop);
-
-  onMounted(() => document.body.appendChild(stats.dom));
-  onUnmounted(() => stats.dom.remove());
-}
+onUnmounted(() => stats.dom.remove());
 </script>
+
+<style>
+.the-debugger .o-side__content {
+  width: 300px;
+  padding: 20px;
+}
+</style>
