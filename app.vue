@@ -400,7 +400,7 @@ async function expandNode (id, newData = {}, { all = false } = {}) {
     .filter((credit) => {
       let include = true;
       if (credit.vote_count !== undefined) {
-        include &&= credit.vote_count >= 50;
+        include &&= credit.vote_count >= 10;
       }
       // FIXME: credits movies don't have `runtime`
       if (credit.runtime !== undefined) {
@@ -440,7 +440,16 @@ async function expandNode (id, newData = {}, { all = false } = {}) {
     );
   }
 
-  cy.add(nodesNotInGraph);
+  const nodesNotInGraphFilteredForRuntime = nodesNotInGraph
+    .filter((node) => {
+      let include = true;
+      if (node.data.runtime !== undefined) {
+        include &&= node.data.runtime >= 45;
+      }
+      return include;
+    });
+
+  const elesAdded = cy.add(nodesNotInGraphFilteredForRuntime);
 
   // Even if a node was already in the graph, there may be new edges we can add now.
   const allValidEdges = credits
@@ -471,7 +480,7 @@ async function expandNode (id, newData = {}, { all = false } = {}) {
   neighborhood.removeClass('background').addClass('foreground');
 
   // Only animate and layout if we added new nodes
-  if (nodesNotInGraph.length) {
+  if (elesAdded.length) {
     await new Promise(resolve => cy.animate({ center: { eles: ele }, complete: resolve }));
 
     await runLayout(ele);
