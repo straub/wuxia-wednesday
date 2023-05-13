@@ -146,7 +146,7 @@
 </template>
 
 <script setup>
-import cytoscape from 'cytoscape';
+import cytoscape, { use as cyUse } from 'cytoscape';
 import fcose from 'cytoscape-fcose';
 import layoutUtilities from 'cytoscape-layout-utilities';
 import cxtmenu from 'cytoscape-cxtmenu';
@@ -154,12 +154,9 @@ import { MovieDb } from 'moviedb-promise';
 import { OField, OButton, OInput, OSwitch, OSelect } from '@oruga-ui/oruga-next';
 import cyStyles from './cy-styles.ts';
 
-cytoscape.use(fcose);
-cytoscape.use(layoutUtilities);
-cytoscape.use(cxtmenu);
-
-/** @type {cytoscape.Core} */
-let cy;
+cyUse(fcose);
+cyUse(layoutUtilities);
+cyUse(cxtmenu);
 
 const moviedb = new MovieDb('b95ecffb4e929829fbc815288785b66e');
 
@@ -178,10 +175,6 @@ const mode = ref('focus');
 const allMovies = shallowRef([]);
 
 const padding = 30;
-
-const fitOrFocus = () => mode.value === 'fit'
-  ? cy.fit(undefined, padding)
-  : cy.fit(cy.$('node.foreground'), padding);
 
 const restart = () => { window.location.href = '/'; };
 
@@ -207,7 +200,7 @@ const config = {
   style: cyStyles,
 };
 
-cy = cytoscape(config);
+const cy = cytoscape(config);
 
 if (import.meta.hot) {
   import.meta.hot.accept('./cy-styles.ts', (newStyles) => {
@@ -216,6 +209,10 @@ if (import.meta.hot) {
     }
   });
 }
+
+const fitOrFocus = () => mode.value === 'fit'
+  ? cy.fit(undefined, padding)
+  : cy.fit(cy.$('node.foreground'), padding);
 
 const saveState = () => {
   allMovies.value = cy.$('.movie').map(ele => ele.data());
@@ -238,13 +235,14 @@ const restoreState = ({ elements }) => {
 
   cy.add(elements);
 
+  fitOrFocus();
+
   allMovies.value = cy.$('.movie').map(ele => ele.data());
 };
 
 const onPopstate = ({ state }) => {
   if (!state) { return; }
   restoreState(state);
-  fitOrFocus();
 };
 
 onMounted(() => addEventListener('popstate', onPopstate));
@@ -304,7 +302,7 @@ const layoutOptions = reactive({
   // // Whether or not to animate the layout
   // animate: true,
   // // Duration of animation in ms, if enabled
-  // animationDuration: 1000,
+  animationDuration: 800,
   // // Easing of animation, if enabled
   // animationEasing: undefined,
   // // Node repulsion (non overlapping) multiplier
@@ -313,16 +311,18 @@ const layoutOptions = reactive({
   // idealEdgeLength: edge => 50,
   // // Divisor to compute edge forces
   // edgeElasticity: edge => 0.45,
-  // // Nesting factor (multiplier) to compute ideal edge length for nested edges
-  // nestingFactor: 0.1,
+  // Nesting factor (multiplier) to compute ideal edge length for nested edges
+  nestingFactor: 0.1,
   // Maximum number of iterations to perform - this is a suggested value and might be adjusted by the algorithm as required
   numIter: 200,
-  // // Gravity force (constant)
-  // gravity: 0.15,
-  // // Gravity range (constant)
+  // Gravity force (constant)
+  gravity: 0.15,
+  // Gravity range (constant)
   // gravityRange: 3.8,
-  // // Initial cooling factor for incremental layout
+  gravityRange: 1,
+  // Initial cooling factor for incremental layout
   // initialEnergyOnIncremental: 0.3,
+  initialEnergyOnIncremental: 0.075,
 });
 
 const lastLayoutTime = ref(0);
@@ -337,6 +337,13 @@ async function runLayout (fixedEle) {
     const start = Date.now();
     cy.layout({
       ...layoutOptions,
+      ...(cy.$('.movie').length === 1
+        ? {
+            // Give the layout enough juice when there's only one movie in the
+            // graph that it doesn't just make a line of the person nodes.
+            initialEnergyOnIncremental: 0.3,
+          }
+        : {}),
       padding,
       fixedNodeConstraint: [
         {
