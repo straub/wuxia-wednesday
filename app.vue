@@ -179,18 +179,6 @@ const fetchPerson = async (id) => {
   return person;
 };
 
-const saveState = () => {
-  allMovies.value = cy.$('.movie').map(ele => ele.data());
-
-  if (isAutoModeRunning.value) { return; }
-
-  const elements = cy.elements().jsons();
-
-  console.log('saving', { elements });
-
-  history.pushState({ elements }, '', new URL(location));
-};
-
 const config = {
   autoungrabify: true,
   // autolock: true,
@@ -330,6 +318,18 @@ const config = {
 
 cy = cytoscape(config);
 
+const saveState = () => {
+  allMovies.value = cy.$('.movie').map(ele => ele.data());
+
+  if (isAutoModeRunning.value) { return; }
+
+  const elements = cy.elements().jsons();
+
+  console.log('saving', { elements });
+
+  history.pushState({ elements }, '', new URL(location));
+};
+
 const restoreState = ({ elements }) => {
   if (!elements?.length) { return; }
 
@@ -438,7 +438,6 @@ async function runLayout (fixedEle) {
         : [],
       stop: () => {
         lastLayoutTime.value = Date.now() - start;
-        saveState();
         resolve();
       },
     })
@@ -547,6 +546,8 @@ async function expandNode (id, newData = {}, { all = false } = {}) {
     await new Promise(resolve => cy.animate({ center: { eles: ele }, complete: resolve }));
 
     await runLayout(ele);
+
+    saveState();
 
     await new Promise(resolve => cy.animate({
       fit: { eles: mode.value === 'focus' ? neighborhood : undefined, padding },
