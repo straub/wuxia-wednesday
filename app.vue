@@ -400,12 +400,8 @@ async function expandNode (id, newData = {}, { all = false } = {}) {
     // improve usability of the graph and movies list.
     .filter((credit) => {
       let include = true;
-      if (credit.vote_count !== undefined) {
+      if (credits.length <= 10 && credit.vote_count !== undefined) {
         include &&= credit.vote_count >= 10;
-      }
-      // FIXME: credits movies don't have `runtime`
-      if (credit.runtime !== undefined) {
-        include &&= credit.runtime >= 45;
       }
       return include;
     })
