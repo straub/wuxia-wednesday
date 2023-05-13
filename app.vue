@@ -380,8 +380,6 @@ onMounted(async () => {
     cy.add(elements);
 
     await fetchAndExpandNode(initialId);
-
-    saveState();
   }
 
   fitOrFocus();
