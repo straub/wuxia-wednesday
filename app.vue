@@ -305,21 +305,24 @@ const openDetails = (id) => {
 const layoutOptions = reactive({
   name: 'fcose',
   nodeDimensionsIncludeLabels: true,
-  fit: false,
-  randomize: false,
+  // Whether or not simple nodes (non-compound nodes) are of uniform dimensions
+  // uniformNodeDimensions: false,
   quality: 'proof',
   // // Whether or not to animate the layout
   // animate: true,
   // // Duration of animation in ms, if enabled
-  animationDuration: 800,
+  animationDuration: 700,
   // // Easing of animation, if enabled
   // animationEasing: undefined,
-  // // Node repulsion (non overlapping) multiplier
+  // Node repulsion (non overlapping) multiplier
   // nodeRepulsion: node => 4500,
-  // // Ideal edge (non nested) length
+  nodeRepulsion: 4500,
+  // Ideal edge (non nested) length
   // idealEdgeLength: edge => 50,
-  // // Divisor to compute edge forces
+  idealEdgeLength: 100,
+  // Divisor to compute edge forces
   // edgeElasticity: edge => 0.45,
+  edgeElasticity: 0.1,
   // Nesting factor (multiplier) to compute ideal edge length for nested edges
   nestingFactor: 0.1,
   // Maximum number of iterations to perform - this is a suggested value and might be adjusted by the algorithm as required
@@ -345,12 +348,14 @@ async function runLayout (fixedEle) {
   await new Promise((resolve) => {
     const start = Date.now();
     cy.layout({
+      fit: false,
+      randomize: false,
       ...layoutOptions,
       ...(cy.$('.movie').length === 1
         ? {
             // Give the layout enough juice when there's only one movie in the
             // graph that it doesn't just make a line of the person nodes.
-            initialEnergyOnIncremental: 0.3,
+            initialEnergyOnIncremental: 0.6,
           }
         : {}),
       padding,

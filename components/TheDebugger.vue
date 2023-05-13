@@ -1,11 +1,12 @@
 <template>
   <OSidebar
     :open="isOpen"
-    :fullheight="false"
+    fullheight
     :fullwidth="false"
     :overlay="false"
-    :right="true"
+    right
     :can-cancel="false"
+    scroll="keep"
     class="the-debugger"
   >
     <div v-if="isOpen">
