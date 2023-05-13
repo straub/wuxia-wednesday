@@ -397,6 +397,9 @@ watch(isContinuousLayoutRunning, () => {
     async function runContinuousLayout () {
       await runLayout();
 
+      // Let the browser breathe for as long as the last layout took.
+      await new Promise(resolve => setTimeout(resolve, lastLayoutTime.value));
+
       if (isContinuousLayoutRunning.value) {
         requestAnimationFrame(runContinuousLayout);
       }
