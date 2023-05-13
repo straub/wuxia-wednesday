@@ -39,7 +39,10 @@
       }"
     />
     <TheDebugger>
-      <div>{{ allMovies.length }} {{ allMovies.length === 1 ? 'movie' : 'movies' }}</div>
+      <div>
+        {{ allMovies.length }} {{ allMovies.length === 1 ? 'movie' : 'movies' }},
+        {{ numPeople }} {{ numPeople === 1 ? 'person' : 'people' }}
+      </div>
       <div><a href="#" @click.prevent="() => runLayout()">Run Layout</a></div>
       <div>Last Layout Time: {{ lastLayoutTime }}ms</div>
       <OField label="Continuous Layout">
@@ -191,6 +194,7 @@ const title = ref('');
 const mode = ref('focus');
 
 const allMovies = shallowRef([]);
+const numPeople = ref(0);
 
 const padding = 30;
 
@@ -241,6 +245,7 @@ const fitOrFocus = async (instant = false) => {
 
 const saveState = () => {
   allMovies.value = cy.$('.movie').map(ele => ele.data());
+  numPeople.value = cy.$('.person').length;
 
   if (isAutoModeRunning.value) { return; }
 
@@ -263,6 +268,7 @@ const restoreState = ({ elements }) => {
   fitOrFocus(true);
 
   allMovies.value = cy.$('.movie').map(ele => ele.data());
+  numPeople.value = cy.$('.person').length;
 };
 
 const onPopstate = ({ state }) => {

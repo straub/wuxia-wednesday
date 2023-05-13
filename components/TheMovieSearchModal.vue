@@ -106,8 +106,6 @@ async function getAsyncData (_name: string) {
     data.value = [...data.value, ...(_data.results ?? [])];
     page.value += 1;
     totalPages.value = _data.total_pages ?? 0;
-  } catch (error) {
-    throw error;
   } finally {
     isFetching.value = false;
   }
