@@ -48,14 +48,14 @@
         :key="key"
         :label="key"
       >
-        <OSlider
-          v-if="key === 'numIter'"
-          v-model="layoutOptions[key]"
-          :min="10"
-          :max="5000"
-          :step="10"
+        <OInput
+          v-if="(typeof layoutOptions[key]) === 'number'"
+          type="number"
+          step="any"
           variant="info"
           size="small"
+          :model-value="layoutOptions[key]"
+          @update:model-value="(value) => layoutOptions[key] = Number(value)"
         />
         <OSwitch
           v-else-if="(typeof layoutOptions[key]) === 'boolean'"
@@ -151,7 +151,7 @@ import fcose from 'cytoscape-fcose';
 import layoutUtilities from 'cytoscape-layout-utilities';
 import cxtmenu from 'cytoscape-cxtmenu';
 import { MovieDb } from 'moviedb-promise';
-import { OField, OButton, OSlider, OSwitch, OSelect } from '@oruga-ui/oruga-next';
+import { OField, OButton, OInput, OSwitch, OSelect } from '@oruga-ui/oruga-next';
 import cyStyles from './cy-styles.ts';
 
 cytoscape.use(fcose);
