@@ -663,8 +663,10 @@ onMounted(() => {
         select: function (ele) {
           const id = ele.id();
           console.log('selected for prune', id);
-          // ele.successors().remove();
           ele.remove();
+          // Remove all nodes now unreachable from the origin.
+          const dijkstra = cy.elements().dijkstra(cy.nodes().first());
+          cy.nodes().filter(node => dijkstra.distanceTo(node) === Infinity).remove();
           saveState();
         },
       },
