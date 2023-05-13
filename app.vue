@@ -155,7 +155,7 @@ const title = ref('');
 
 const mode = ref('focus');
 
-const allMovies = ref([]);
+const allMovies = shallowRef([]);
 
 const padding = 30;
 
@@ -468,7 +468,8 @@ async function expandNode (id, newData = {}, { all = false } = {}) {
   const perPage = 10;
 
   const pageOfNodes = credits
-  // .sort((a, b) => b.vote_average - a.vote_average)
+    // There's a lot of noise in "movie" credits, so we filter some out now to
+    // improve usability of the graph and movies list.
     .filter((credit) => {
       let include = true;
       if (credit.vote_count !== undefined) {
@@ -514,6 +515,7 @@ async function expandNode (id, newData = {}, { all = false } = {}) {
 
   cy.add(nodesNotInGraph);
 
+  // Even if a node was already in the graph, there may be new edges we can add now.
   const allValidEdges = credits
     .map((credit) => {
       const movie = type === 'movie' ? newData : credit;
