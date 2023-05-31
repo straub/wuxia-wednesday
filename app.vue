@@ -571,12 +571,20 @@ async function fetchAndExpandNode (id, options = {}) {
 
 const isAutoModeComplete = ref(false);
 const lastAutoModeTime = ref(0);
+let wakeLock;
 
-watch(isAutoModeRunning, () => {
+watch(isAutoModeRunning, async () => {
   if (isAutoModeRunning.value) {
     isAutoModeComplete.value = false;
     isContinuousLayoutRunning.value = true;
     const autoModeStartTime = Date.now();
+
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      console.log({ wakeLock });
+    } catch (err) {
+      console.error(`${err.name}, ${err.message}`);
+    }
 
     async function expandPersonNodes () {
       let allFullyExpanded = true;
@@ -604,10 +612,21 @@ watch(isAutoModeRunning, () => {
       } else {
         isContinuousLayoutRunning.value = false;
         lastAutoModeTime.value = Date.now() - autoModeStartTime;
+        if (wakeLock) {
+          wakeLock.release();
+          console.log({ wakeLock });
+          wakeLock = null;
+        }
         saveState();
       }
     }
     expandPersonNodes();
+  }
+});
+
+document.addEventListener('visibilitychange', async () => {
+  if (wakeLock !== null && document.visibilityState === 'visible') {
+    wakeLock = await navigator.wakeLock.request('screen');
   }
 });
 
