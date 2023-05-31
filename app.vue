@@ -495,6 +495,7 @@ async function expandNode (id, newData = {}, { all = false } = {}) {
       let include = true;
       if (node.data.runtime !== undefined) {
         include &&= node.data.runtime >= 45;
+        include &&= node.data.runtime <= 240;
       }
       if (node.data.movie_credits?.cast !== undefined) {
         include &&= node.data.movie_credits?.cast.length > 1;
