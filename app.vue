@@ -476,18 +476,33 @@ async function expandNode (id, newData = {}, { all = false } = {}) {
         };
       }),
     );
+  } else if (type === 'movie') {
+    // Fetch additional data on new people
+    await Promise.all(
+      nodesNotInGraph.map(async (node) => {
+        const person = await fetchPerson(node.data.id.replace('person:', ''));
+
+        node.data = {
+          ...person,
+          ...node.data,
+        };
+      }),
+    );
   }
 
-  const nodesNotInGraphFilteredForRuntime = nodesNotInGraph
+  const nodesNotInGraphFilteredForExtraProps = nodesNotInGraph
     .filter((node) => {
       let include = true;
       if (node.data.runtime !== undefined) {
         include &&= node.data.runtime >= 45;
       }
+      if (node.data.movie_credits?.cast !== undefined) {
+        include &&= node.data.movie_credits?.cast.length > 1;
+      }
       return include;
     });
 
-  const elesAdded = cy.add(nodesNotInGraphFilteredForRuntime);
+  const elesAdded = cy.add(nodesNotInGraphFilteredForExtraProps);
 
   // Even if a node was already in the graph, there may be new edges we can add now.
   const allValidEdges = credits
