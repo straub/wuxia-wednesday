@@ -29,6 +29,54 @@
             }
           }"
         >Reset Filters</a>
+        <OCollapse
+          :open="false"
+          class="card"
+          animation="slide"
+          trigger-class="trigger-fullwidth"
+        >
+          <template #trigger="props">
+            <div class="card-header" role="button">
+                <span class="card-header-title">
+                    More Filters
+                </span>
+                <a class="card-header-icon">
+                    <o-icon :icon="props.open ? 'menu-up' : 'menu-down'">
+                    </o-icon>
+                </a>
+            </div>
+          </template>
+          <div class="card-content">
+            <OInputitems
+              v-model="filters.includeCast"
+              :data="filteredIncludeAvailableCast"
+              :allow-autocomplete="true"
+              :allow-new="false"
+              :open-on-focus="true"
+              :keep-first="true"
+              :confirm-keys="[',','Enter']"
+              icon=""
+              variant="info"
+              size="small"
+              placeholder="Include cast..."
+              @typing="(text: string) => includeCastFilterText = text"
+            />
+            <OInputitems
+              v-model="filters.excludeCast"
+              :data="filteredExcludeAvailableCast"
+              :allow-autocomplete="true"
+              :allow-new="false"
+              :open-on-focus="true"
+              :keep-first="true"
+              :confirm-keys="[',','Enter']"
+              icon=""
+              variant="info"
+              size="small"
+              placeholder="Exclude cast..."
+              @typing="(text: string) => excludeCastFilterText = text"
+            />
+          </div>
+        </OCollapse>
       </div>
     </div>
     <OTable
@@ -160,11 +208,11 @@
 <script setup lang="ts">
 import { MovieResponse, CreditsResponse, Cast } from 'moviedb-promise/dist/request-types';
 import { Genre } from 'moviedb-promise/dist/types';
-import { OModal, OTable, OTableColumn, OIcon, OInput, OSwitch, OInputitems } from '@oruga-ui/oruga-next';
+import { OModal, OTable, OTableColumn, OIcon, OInput, OSwitch, OInputitems, OCollapse } from '@oruga-ui/oruga-next';
 
 type ExtendedMovieResponse = MovieResponse & { id: string, credits: CreditsResponse }
 
-type Filters = { [key : string]: string | [number, number] }
+type Filters = { [key : string]: string | [number, number] | Array<string> }
 
 export interface Props {
   isShowing: Boolean,
@@ -290,7 +338,20 @@ const compiledFilters = computed(() => {
   const columnsValue = columns.value;
   Object.keys(filtersValue).forEach((key) => {
     const filterValue = filtersValue[key];
-    if (!filterValue) { return; }
+    if (!filterValue || !filterValue.length) { return; }
+
+    if (key === 'includeCast') {
+      obj[key] = (row: { credits: CreditsResponse }) => {
+        return row.credits?.cast?.some(c => filterValue.includes(c.name));
+      };
+      return;
+    }
+    if (key === 'excludeCast') {
+      obj[key] = (row: { credits: CreditsResponse }) => {
+        return !row.credits?.cast?.some(c => filterValue.includes(c.name));
+      };
+      return;
+    }
 
     const filterFunction =
       columnsValue.find(c => c.field === key)?.customSearch?.bind(null, filterValue) ??
@@ -350,6 +411,34 @@ const genreFilterText = ref('');
 const filteredAvailableGenres = computed(() => {
   const text = genreFilterText.value?.toLowerCase();
   return availableGenres.value.filter(genre => genre?.toLowerCase().includes(text));
+});
+
+const availableCast = computed(() => {
+  return Array.from(
+    new Set(
+      rows.value
+        .map(r => r.credits.cast?.map(c => c.name))
+        .flat()
+        .filter(c => !!c),
+    ),
+  ).sort();
+});
+
+const includeCastFilterText = ref('');
+const excludeCastFilterText = ref('');
+
+const filteredIncludeAvailableCast = computed(() => {
+  const text = includeCastFilterText.value?.toLowerCase();
+  return availableCast.value
+  .filter(cast => cast?.toLowerCase().includes(text))
+  .slice(0, 20);
+});
+
+const filteredExcludeAvailableCast = computed(() => {
+  const text = excludeCastFilterText.value?.toLowerCase();
+  return availableCast.value
+  .filter(cast => cast?.toLowerCase().includes(text))
+  .slice(0, 20);
 });
 
 interface StringToComputedNumber { [key: string]: ComputedRef<number> }

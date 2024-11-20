@@ -16,6 +16,8 @@ import {
   mdiAutoMode,
   mdiStar,
   mdiStarOutline,
+  mdiMenuDown,
+  mdiMenuUp,
 } from '@mdi/js';
 
 const knownIcons = {
@@ -34,6 +36,8 @@ const knownIcons = {
   mdiAutoMode,
   mdiStar,
   mdiStarOutline,
+  mdiMenuDown,
+  mdiMenuUp,
 };
 
 export default {
