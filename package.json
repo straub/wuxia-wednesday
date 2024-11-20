@@ -21,7 +21,7 @@
     "cytoscape-cxtmenu": "3.5.0",
     "cytoscape-fcose": "2.2.0",
     "cytoscape-layout-utilities": "1.1.1",
-    "moviedb-promise": "3.4.0",
+    "moviedb-promise": "3.4.1",
     "nuxt": "3.14.1592",
     "sass": "1.62.1",
     "stats.js": "0.17.0"
