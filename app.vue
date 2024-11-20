@@ -4,6 +4,7 @@
     @mousedown="() => isGlitching = true"
     @touchend="() => isGlitching = true"
   >
+    <NuxtPwaManifest />
     <div
       id="cy"
       :style="{ cursor }"
