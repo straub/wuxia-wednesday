@@ -169,7 +169,7 @@
 </template>
 
 <script setup>
-import cytoscape, { use as cyUse } from 'cytoscape';
+import cytoscape from 'cytoscape';
 import fcose from 'cytoscape-fcose';
 import layoutUtilities from 'cytoscape-layout-utilities';
 import cxtmenu from 'cytoscape-cxtmenu';
@@ -177,9 +177,9 @@ import { MovieDb } from 'moviedb-promise';
 import { OField, OButton, OInput, OSwitch, OSelect, ONotification } from '@oruga-ui/oruga-next';
 import cyStyles from './cy-styles.ts';
 
-cyUse(fcose);
-cyUse(layoutUtilities);
-cyUse(cxtmenu);
+cytoscape.use(fcose);
+cytoscape.use(layoutUtilities);
+cytoscape.use(cxtmenu);
 
 const moviedb = new MovieDb('b95ecffb4e929829fbc815288785b66e');
 
