@@ -463,6 +463,13 @@ async function expandNode (id, newData = {}, { all = false } = {}) {
     })
     .flat();
 
+  const totalPages = Math.ceil(credits.length / perPage);
+  const percentExpanded = Math.min(100, Math.round((currentPage + 1) / totalPages * 100));
+
+  ele.data({ percentExpanded });
+  ele.style({ 'pie-1-background-opacity': 1 });
+  ele.animate({ style: { 'pie-1-background-opacity': 0 }, duration: 3000, });
+
   const nodesNotInGraph = pageOfNodes
     .filter(node => !cy.hasElementWithId(node.data.id));
 

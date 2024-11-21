@@ -25,6 +25,15 @@ export default [
     },
   },
   {
+    selector: 'node[percentExpanded]',
+    style: {
+      'pie-size': '80%',
+      'pie-1-background-color': '#01B4C5',
+      'pie-1-background-size': 'data(percentExpanded)',
+      'pie-1-background-opacity': 0,
+    },
+  },
+  {
     selector: 'node.movie',
     style: {
       // label: 'data(title)',
