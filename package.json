@@ -14,7 +14,7 @@
     "@oruga-ui/oruga-next": "0.6.0",
     "@oruga-ui/theme-bulma": "0.2.10",
     "@types/cytoscape": "3.21.8",
-    "@types/cytoscape-cxtmenu": "3.4.0",
+    "@types/cytoscape-cxtmenu": "3.4.4",
     "@types/cytoscape-fcose": "2.2.0",
     "@types/stats.js": "0.17.0",
     "@vite-pwa/nuxt": "^0.10.6",
