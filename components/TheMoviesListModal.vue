@@ -83,7 +83,8 @@
       ref="table"
       :data="filteredRows"
       custom-row-key="id"
-      default-sort-direction="desc"
+      :default-sort="savedSort.field"
+      :default-sort-direction="savedSort.direction"
       detailed
       show-detail-icon
       custom-detail-row
@@ -91,6 +92,7 @@
       :debounce-search="150"
       :backend-filtering="true"
       @filters-change="(newFilters: Filters) => filters = newFilters"
+      @sort="(field, direction) => { savedSort = { field, direction } }"
     >
       <OTableColumn
         v-for="column in columns"
@@ -217,6 +219,7 @@ type Filters = { [key : string]: string | [number, number] | Array<string> }
 export interface Props {
   isShowing: Boolean,
   movies: ExtendedMovieResponse[],
+  people: Cast[],
 }
 
 const props = defineProps<Props>();
@@ -230,6 +233,8 @@ const table = ref<{ filters: Filters, newData: { id: string }[], newDataTotal: n
 const isFiltered = computed(() => table.value?.newDataTotal !== props.movies.length);
 
 const filters = ref<Filters>({});
+
+const savedSort = shallowRef({ field: undefined, direction: 'desc' });
 
 watch(
   table,
