@@ -1,7 +1,6 @@
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  ssr: false,
 
   devServer: {
     host: '0.0.0.0',
@@ -37,9 +36,9 @@ export default defineNuxtConfig({
   modules: ['@vite-pwa/nuxt'],
 
   pwa: {
-    devOptions: {
-      enabled: process.env.NODE_ENV === 'development',
-    },
+    // devOptions: {
+    //   enabled: process.env.NODE_ENV === 'development',
+    // },
     includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
     manifest: {
       name: 'Wuxia Wednesday',

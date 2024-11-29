@@ -30,8 +30,8 @@ function loop () {
 }
 requestAnimationFrame(loop);
 
-const keyComboHandler = ({ ctrlKey, altKey, shiftKey, key }: KeyboardEvent) => {
-  if (ctrlKey && altKey && shiftKey && key === 'D') {
+const keyComboHandler = ({ ctrlKey, altKey, key }: KeyboardEvent) => {
+  if (ctrlKey && altKey && key === 'd') {
     isOpen.value = !isOpen.value;
 
     if (isOpen.value) {
