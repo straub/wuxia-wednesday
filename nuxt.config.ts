@@ -11,7 +11,7 @@ export default defineNuxtConfig({
       title: 'Wuxia Wednesday',
       meta: [
         { name: 'description', content: 'Movie graph explorer' },
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, interactive-widget=resizes-content' },
         { name: 'theme-color', content: '#000000' },
       ],
       link: [
