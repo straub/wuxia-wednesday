@@ -341,19 +341,14 @@ const compiledFilters = computed(() => {
   const obj: { [x: string]: Function } = {};
   const filtersValue = filters.value;
   const columnsValue = columns.value;
+
   Object.keys(filtersValue).forEach((key) => {
     const filterValue = filtersValue[key];
     if (!filterValue || !filterValue.length) { return; }
 
-    if (key === 'includeCast') {
-      obj[key] = (row: { credits: CreditsResponse }) => {
-        return row.credits?.cast?.some(c => filterValue.includes(c.name));
-      };
-      return;
-    }
-    if (key === 'excludeCast') {
-      obj[key] = (row: { credits: CreditsResponse }) => {
-        return !row.credits?.cast?.some(c => filterValue.includes(c.name));
+    if (key === 'includeCast' || key === 'excludeCast') {
+      obj[key] = (row: MovieResponse) => {
+        return castFilteredByIdSet.value.has(row.id);
       };
       return;
     }
@@ -444,6 +439,28 @@ const filteredExcludeAvailableCast = computed(() => {
   return availableCast.value
   .filter(cast => cast?.toLowerCase().includes(text))
   .slice(0, 20);
+});
+
+const castFilteredByIdSet = computed(() => {
+  const { includeCast, excludeCast } = filters.value;
+
+  const filteredRows = rows.value.filter(row => {
+    if (includeCast instanceof Array) {
+      // If not every cast member to include is in this movie, return false.
+      if (!includeCast.every(c => row.credits?.cast?.some(cast => cast.name === c))) {
+        return false;
+      }
+    }
+    if (excludeCast instanceof Array) {
+      // If any cast member to exclude is in this movie, return false.
+      if (excludeCast.some(c => row.credits?.cast?.some(cast => cast.name === c))) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  return new Set(filteredRows.map(r => r.id));
 });
 
 interface StringToComputedNumber { [key: string]: ComputedRef<number> }
