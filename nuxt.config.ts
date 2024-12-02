@@ -130,6 +130,19 @@ export default defineNuxtConfig({
             },
           }
         },
+        {
+          urlPattern: /^https:\/\/image\.tmdb\.org\/.*/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'tmdb-image-cache',
+            expiration: {
+              maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 days
+            },
+            cacheableResponse: {
+              statuses: [0, 200]
+            },
+          }
+        },
       ],
     },
   },
