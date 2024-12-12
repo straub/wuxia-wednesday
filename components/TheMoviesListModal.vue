@@ -344,7 +344,7 @@ const compiledFilters = computed(() => {
 
   Object.keys(filtersValue).forEach((key) => {
     const filterValue = filtersValue[key];
-    if (!filterValue || !filterValue.length) { return; }
+    if (!filterValue) { return; }
 
     if (key === 'includeCast' || key === 'excludeCast') {
       obj[key] = (row: MovieResponse) => {
