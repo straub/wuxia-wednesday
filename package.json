@@ -9,7 +9,7 @@
     "postinstall": "nuxt prepare"
   },
   "devDependencies": {
-    "@mdi/js": "7.2.96",
+    "@mdi/js": "7.4.47",
     "@nuxtjs/eslint-config-typescript": "12.1.0",
     "@oruga-ui/oruga-next": "0.6.0",
     "@oruga-ui/theme-bulma": "0.2.10",
