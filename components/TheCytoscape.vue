@@ -570,6 +570,9 @@ const bfsPathFound = ref(false);
 const findPath = async (targetMovie) => {
   if (!targetMovie) { return; }
 
+  // Need at least one existing movie in the graph to find a path from.
+  if (!cy.$('.movie').length) { return; }
+
   emit('update:isBfsComplete', false);
   bfsPathFound.value = false;
   emit('update:isBfsModeRunning', true);

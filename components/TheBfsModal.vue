@@ -42,7 +42,7 @@
         </template>
         <template v-if="page > totalPages" #footer>
           <span class="ex-text-grey">
-            Thats it! No more movies found.
+            That's it! No more movies found.
           </span>
         </template>
       </OAutocomplete>
