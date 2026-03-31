@@ -6,7 +6,7 @@ A single-page **movie graph explorer** PWA. The user starts from the most popula
 
 The name comes from a weekly movie-night game where the goal is to watch films connected to each other through shared cast.
 
-Live site: <https://wuxia-wednesday.netlify.app/>
+Live site: <https://wuxia-wednesday.davidstraub.com/>
 
 ## Tech Stack
 
