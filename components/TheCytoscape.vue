@@ -26,11 +26,14 @@ const emit = defineEmits([
   'update:isAutoModeRunning',
   'update:isAutoModeComplete',
   'update:isContinuousLayoutRunning',
+  'update:isBfsModeRunning',
+  'update:isBfsComplete',
 ]);
 
 const isAutoModeRunning = defineModel('isAutoModeRunning');
 const isAutoModeComplete = defineModel('isAutoModeComplete');
 const isContinuousLayoutRunning = defineModel('isContinuousLayoutRunning');
+const isBfsModeRunning = defineModel('isBfsModeRunning');
 
 const mode = computed(() => props.mode);
 
@@ -562,6 +565,67 @@ const selectMovie = async (movie) => {
   await fetchAndExpandNode(id);
 }
 
+const bfsPathFound = ref(false);
+
+const findPath = async (targetMovie) => {
+  if (!targetMovie) { return; }
+
+  emit('update:isBfsComplete', false);
+  bfsPathFound.value = false;
+  emit('update:isBfsModeRunning', true);
+
+  // Record the origin movie (first movie in the graph before we add the target).
+  const originId = cy.$('.movie').first().id();
+
+  // Add target movie to graph if not already present.
+  const targetId = `movie:${targetMovie.id}`;
+  if (!cy.hasElementWithId(targetId)) {
+    cy.add([{
+      group: 'nodes',
+      data: { id: targetId },
+      classes: ['movie', 'foreground'],
+      pannable: true,
+    }]);
+  }
+
+  // BFS queue: all nodes currently in the graph.
+  const visited = new Set(cy.nodes().map(n => n.id()));
+  const queue = [...visited];
+
+  while (queue.length > 0 && isBfsModeRunning.value) {
+    const id = queue.shift();
+
+    await fetchAndExpandNode(id);
+
+    // Enqueue any newly discovered nodes.
+    cy.nodes().forEach((node) => {
+      const nodeId = node.id();
+      if (!visited.has(nodeId)) {
+        visited.add(nodeId);
+        queue.push(nodeId);
+      }
+    });
+
+    // Check whether a path now exists between origin and target.
+    const originEle = cy.$id(originId);
+    const targetEle = cy.$id(targetId);
+    if (originEle.length && targetEle.length) {
+      const result = cy.elements().aStar({ root: originEle, goal: targetEle });
+      if (result.found) {
+        // Highlight the path.
+        cy.nodes().addClass('background').removeClass('foreground');
+        cy.edges().addClass('background').removeClass('foreground');
+        result.path.removeClass('background').addClass('foreground');
+        bfsPathFound.value = true;
+        break;
+      }
+    }
+  }
+
+  emit('update:isBfsModeRunning', false);
+  emit('update:isBfsComplete', true);
+};
+
 const focusId = (id) => {
   cy.fit(cy.$id(id), padding);
 }
@@ -581,7 +645,10 @@ defineExpose({
   lastLayoutTime,
   layoutOptions,
   runLayout,
+  fitOrFocus,
   selectMovie,
+  findPath,
+  bfsPathFound,
   focusId,
   onFilteredMovies,
 });
