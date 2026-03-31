@@ -15,36 +15,27 @@ Live site: <https://wuxia-wednesday.netlify.app/>
 | Framework | [Nuxt 3](https://nuxt.com/) (Vue 3, SSG/SPA) |
 | Graph rendering | [Cytoscape.js](https://js.cytoscape.org/) + [fCoSE](https://github.com/iVis-at-Bilkent/cytoscape.js-fcose) layout + [cxtmenu](https://github.com/cytoscape/cytoscape.js-cxtmenu) |
 | UI components | [Oruga](https://oruga.io/) + [Bulma](https://bulma.io/) theme |
-| Data source | [TMDb API](https://developer.themoviedb.org/docs) via `moviedb-promise` |
+| Data source | [TMDb API](https://developer.themoviedb.org/docs) |
 | Hosting | [Netlify](https://www.netlify.com/) |
-| PWA | `@vite-pwa/nuxt` (Workbox) |
+| PWA | Workbox-based service worker |
 | Styling | SCSS |
 | Language | TypeScript / JavaScript |
 
 ## Project Structure
 
 ```
-app.vue                  # Root component; toolbar, modals, layout wiring
-nuxt.config.ts           # Nuxt + PWA config, TMDb API caching rules
-components/
-  TheCytoscape.vue       # Core: Cytoscape graph, TMDb fetching, expand logic
-  TheMovieSearchModal.vue  # Search-by-title modal
-  TheMoviesListModal.vue   # Sortable table of all movies currently in the graph
-  TheAboutModal.vue      # About / how-to-use modal
-  TheLogo.vue            # Animated glitch logo + loading indicator
-  TheDebugger.vue        # Dev-only overlay for tweaking layout options
-  FilterRangeSlider.vue  # Range-slider used inside the movies-list filter UI
-  OrugaSvgIcon.js        # Bridges @mdi/js icons into Oruga's icon slot
-cy-styles.ts             # Cytoscape stylesheet (node/edge appearance)
-plugins/                 # Nuxt plugins
-public/                  # Static assets (favicons, PWA icons)
+components/   # Vue components (graph, modals, logo, debugger, etc.)
+plugins/      # Nuxt plugins
+public/       # Static assets (favicons, PWA icons)
 ```
+
+Key files in the root: the root app component, the Nuxt config (which also defines PWA settings and TMDb API caching rules), and a Cytoscape stylesheet that controls node/edge appearance.
 
 ## Key Concepts
 
 - **Nodes** are either movies (`movie:<tmdb-id>`) or people (`person:<tmdb-id>`).  
 - **Edges** connect a movie to each cast member that appears in both nodes' credit lists.  
-- Clicking a node fetches its TMDb details and adds the next "page" of connected nodes (10 per page, sorted by popularity).  
+- Clicking a node fetches its TMDb details and adds the next page of connected nodes (sorted by popularity).  
 - **Auto Mode** iterates over every person node in the graph, fully expanding each one until no new nodes appear.  
 - Graph state (all Cytoscape element JSON) is serialised into `history.pushState` so the browser back/forward buttons work.
 
@@ -60,7 +51,7 @@ npm run preview   # preview production build locally
 
 ## Notes for Agents
 
-- There is no backend; all data comes from the public TMDb API using a hardcoded read-only API key in `TheCytoscape.vue`.
+- There is no backend; all data comes from the public TMDb API using a hardcoded read-only API key.
 - There are no automated tests in this repository yet.
-- The Oruga component library uses a customised dark colour theme defined in the `<style>` block of `app.vue`.
-- `cy-styles.ts` is hot-reloaded in dev mode (see `import.meta.hot.accept` in `TheCytoscape.vue`).
+- The Oruga component library uses a customised dark colour theme defined in the root component's `<style>` block.
+- The Cytoscape stylesheet is hot-reloaded in dev mode via Vite's HMR.

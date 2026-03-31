@@ -10,7 +10,7 @@ The name comes from a weekly movie-night game where the goal is to watch movies 
 - [Cytoscape.js](https://js.cytoscape.org/) with the [fCoSE](https://github.com/iVis-at-Bilkent/cytoscape.js-fcose) layout
 - [Oruga](https://oruga.io/) UI component library
 - [TMDb API](https://developer.themoviedb.org/docs) for movie and person data
-- [Netlify](https://www.netlify.com/) hosting with PWA support via `@vite-pwa/nuxt`
+- [Netlify](https://www.netlify.com/) hosting with PWA support
 
 ## Setup
 
