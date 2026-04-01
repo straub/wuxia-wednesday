@@ -12,6 +12,8 @@
         v-model:isAutoModeRunning="isAutoModeRunning"
         v-model:isAutoModeComplete="isAutoModeComplete"
         v-model:isContinuousLayoutRunning="isContinuousLayoutRunning"
+        v-model:isBfsModeRunning="isBfsModeRunning"
+        v-model:isBfsComplete="isBfsComplete"
       />
       <TheMoviesListModal
         v-model:is-showing="isShowingMoviesList"
@@ -81,6 +83,14 @@
       v-model:is-searching="isSearching"
       @select="isSearching = false; cy.selectMovie($event)"
     />
+    <TheBfsModal
+      v-model:is-active="isFindingPath"
+      @select="isFindingPath = false; cy.findPath($event)"
+    />
+    <TheBfsPathModal
+      v-model:is-showing="isShowingBfsPath"
+      :path="bfsPath"
+    />
     <TheAboutModal v-model:is-showing="isShowingAbout" />
     <TheLogo
       v-model:is-glitching="isGlitching"
@@ -109,6 +119,13 @@
           title="Search"
           icon-right="movie-search-outline"
           @click="isSearching = true"
+        />
+        <OButton
+          size="small"
+          title="Find Path"
+          icon-right="map-marker-path"
+          :class="{ isBfsModeRunning }"
+          @click="isFindingPath = true"
         />
         <OButton
           size="small"
@@ -151,6 +168,24 @@
       Auto Mode is complete!
       Found {{ allMovies.length }} movies in {{ (lastAutoModeTime / 1000 / 60).toFixed(1) }} minutes.
     </ONotification>
+    <ONotification
+      v-model:active="isBfsComplete"
+      :variant="bfsPathFound ? 'success' : 'warning'"
+      position="top"
+      has-icon
+      :icon="bfsPathFound ? 'map-marker-path' : 'map-marker-off-outline'"
+      icon-size="small"
+      closable
+      indefinite
+    >
+      <template v-if="bfsPathFound">
+        Path found in {{ (lastBfsTime / 1000).toFixed(1) }}s!
+        <a href="#" @click.prevent="isShowingBfsPath = true">View Path</a>
+      </template>
+      <template v-else>
+        No path found between the movies.
+      </template>
+    </ONotification>
   </div>
 </template>
 
@@ -164,6 +199,9 @@ const isGlitching = ref(false);
 const isAutoModeRunning = ref(false);
 const isAutoModeComplete = ref(false);
 const isContinuousLayoutRunning = ref(false);
+const isFindingPath = ref(false);
+const isBfsModeRunning = ref(false);
+const isBfsComplete = ref(false);
 
 const mode = ref('focus');
 
@@ -180,6 +218,12 @@ const allMovies = computed(() => cy.value?.allMovies ?? []);
 const allPeople = computed(() => cy.value?.allPeople ?? []);
 
 const loadingCount = computed(() => cy.value?.loadingCount);
+const bfsPathFound = computed(() => cy.value?.bfsPathFound);
+const lastBfsTime = computed(() => cy.value?.lastBfsTime ?? 0);
+const bfsPath = computed(() => cy.value?.bfsPath ?? []);
+const isShowingBfsPath = ref(false);
+
+const fitOrFocus = () => cy.value?.fitOrFocus();
 </script>
 
 <style lang="scss">
@@ -259,6 +303,22 @@ body {
 
   to {
     transform: rotate(1turn);
+  }
+}
+.isBfsModeRunning svg {
+  animation: isBfsModeRunning 1s linear infinite;
+}
+@keyframes isBfsModeRunning {
+  from {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.3);
+  }
+
+  to {
+    transform: scale(1);
   }
 }
 .o-icon {

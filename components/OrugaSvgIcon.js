@@ -18,6 +18,8 @@ import {
   mdiStarOutline,
   mdiMenuDown,
   mdiMenuUp,
+  mdiMapMarkerPath,
+  mdiMapMarkerOffOutline,
 } from '@mdi/js';
 
 const knownIcons = {
@@ -38,6 +40,8 @@ const knownIcons = {
   mdiStarOutline,
   mdiMenuDown,
   mdiMenuUp,
+  mdiMapMarkerPath,
+  mdiMapMarkerOffOutline,
 };
 
 export default {

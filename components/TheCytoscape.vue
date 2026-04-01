@@ -26,11 +26,14 @@ const emit = defineEmits([
   'update:isAutoModeRunning',
   'update:isAutoModeComplete',
   'update:isContinuousLayoutRunning',
+  'update:isBfsModeRunning',
+  'update:isBfsComplete',
 ]);
 
 const isAutoModeRunning = defineModel('isAutoModeRunning');
 const isAutoModeComplete = defineModel('isAutoModeComplete');
 const isContinuousLayoutRunning = defineModel('isContinuousLayoutRunning');
+const isBfsModeRunning = defineModel('isBfsModeRunning');
 
 const mode = computed(() => props.mode);
 
@@ -94,7 +97,7 @@ const saveState = () => {
   allMovies.value = cy.$('.movie').map(ele => ele.data());
   allPeople.value = cy.$('.person').map(ele => ele.data());
 
-  if (isAutoModeRunning.value) { return; }
+  if (isAutoModeRunning.value || isBfsModeRunning.value) { return; }
 
   const elements = cy.elements().jsons();
 
@@ -562,6 +565,152 @@ const selectMovie = async (movie) => {
   await fetchAndExpandNode(id);
 }
 
+const bfsPathFound = ref(false);
+const lastBfsTime = ref(0);
+const bfsPath = ref([]);
+
+const findPath = async (targetMovie) => {
+  console.log('[findPath] called with targetMovie:', targetMovie);
+
+  if (!targetMovie) {
+    console.warn('[findPath] no targetMovie, aborting');
+    return;
+  }
+
+  // Need at least one existing movie in the graph to find a path from.
+  const existingMovies = cy.$('.movie');
+  if (!existingMovies.length) {
+    console.warn('[findPath] no movies in graph, aborting');
+    return;
+  }
+
+  emit('update:isBfsComplete', false);
+  bfsPathFound.value = false;
+  bfsPath.value = [];
+  isBfsModeRunning.value = true;
+  console.log('[findPath] isBfsModeRunning set to true, value reads back as:', isBfsModeRunning.value);
+
+  const bfsStartTime = Date.now();
+
+  // Record the origin movie (first movie in the graph before we add the target).
+  const originId = cy.$('.movie').first().id();
+  const originEle = cy.$id(originId);
+  console.log('[findPath] origin:', originId, 'position:', originEle.position());
+
+  // Add target movie to graph positioned to the right of the origin.
+  const targetId = `movie:${targetMovie.id}`;
+  console.log('[findPath] target:', targetId);
+  if (!cy.hasElementWithId(targetId)) {
+    cy.add([{
+      group: 'nodes',
+      data: { ...JSON.parse(JSON.stringify(targetMovie)), id: targetId },
+      classes: ['movie', 'foreground'],
+      position: {
+        x: originEle.position('x') + 800,
+        y: originEle.position('y'),
+      },
+      pannable: true,
+    }]);
+    console.log('[findPath] target node added to graph');
+  } else {
+    console.log('[findPath] target node was already in graph');
+  }
+
+  // Fit the view so both origin and target are visible.
+  await fitOrFocus();
+
+  const targetEle = cy.$id(targetId);
+  console.log('[findPath] targetEle found:', targetEle.length > 0);
+
+  // Use a plain local variable as the loop guard so Vue reactivity timing
+  // can never cause the loop to exit prematurely. An external cancel
+  // (isBfsModeRunning set to false by the parent) is still respected via
+  // the watchEffect below.
+  let bfsRunning = true;
+  const stopWatch = watchEffect(() => {
+    if (!isBfsModeRunning.value) bfsRunning = false;
+  });
+  console.log('[findPath] bfsRunning after watchEffect setup:', bfsRunning);
+
+  // BFS queue: all nodes currently in the graph.
+  const visited = new Set(cy.nodes().map(n => n.id()));
+  const queue = [...visited];
+  console.log('[findPath] initial queue length:', queue.length, 'nodes:', queue);
+
+  try {
+    while (queue.length > 0 && bfsRunning) {
+      const id = queue.shift();
+      console.log(`[findPath] expanding node: ${id} | queue remaining: ${queue.length} | bfsRunning: ${bfsRunning} | isBfsModeRunning: ${isBfsModeRunning.value}`);
+
+      try {
+        await fetchAndExpandNode(id);
+        console.log(`[findPath] expanded ${id} successfully | total nodes now: ${cy.nodes().length}`);
+      } catch (err) {
+        // A single failed API call (rate limit, network blip, etc.) should not
+        // abort the whole search — just skip this node and carry on.
+        console.warn(`[findPath] failed to expand node ${id}:`, err);
+        continue;
+      }
+
+      // Enqueue any newly discovered nodes.
+      let newNodeCount = 0;
+      cy.nodes().forEach((node) => {
+        const nodeId = node.id();
+        if (!visited.has(nodeId)) {
+          visited.add(nodeId);
+          queue.push(nodeId);
+          newNodeCount++;
+        }
+      });
+      console.log(`[findPath] enqueued ${newNodeCount} new nodes | queue length now: ${queue.length}`);
+
+      // Check whether a path now exists between origin and target.
+      if (originEle.length && targetEle.length) {
+        const result = cy.elements().aStar({ root: originEle, goal: targetEle });
+        console.log(`[findPath] aStar result: found=${result.found}`);
+        if (result.found) {
+          // Highlight the path.
+          cy.nodes().addClass('background').removeClass('foreground');
+          cy.edges().addClass('background').removeClass('foreground');
+          result.path.removeClass('background').addClass('foreground');
+          bfsPathFound.value = true;
+
+          // Build an ordered list of path items for the path modal.
+          // aStar returns alternating nodes and edges: node, edge, node, edge, …
+          // We accumulate nodes and attach the preceding edge's billing as `via`.
+          const items = [];
+          let pendingVia = null;
+          result.path.forEach((ele) => {
+            if (ele.isEdge()) {
+              pendingVia = ele.data('billing');
+            } else {
+              items.push({
+                type: ele.hasClass('movie') ? 'movie' : 'person',
+                via: pendingVia,
+                ...ele.data(),
+              });
+              pendingVia = null;
+            }
+          });
+          bfsPath.value = items;
+
+          console.log('[findPath] path found! length:', result.path.length);
+          break;
+        }
+      } else {
+        console.warn('[findPath] originEle or targetEle missing from graph!', { originEleLength: originEle.length, targetEleLength: targetEle.length });
+      }
+    }
+    console.log('[findPath] loop exited | bfsRunning:', bfsRunning, '| queue empty:', queue.length === 0, '| pathFound:', bfsPathFound.value);
+  } finally {
+    stopWatch();
+    lastBfsTime.value = Date.now() - bfsStartTime;
+    isBfsModeRunning.value = false;
+    emit('update:isBfsComplete', true);
+    console.log('[findPath] finished, isBfsComplete emitted');
+  }
+};
+
 const focusId = (id) => {
   cy.fit(cy.$id(id), padding);
 }
@@ -581,7 +730,12 @@ defineExpose({
   lastLayoutTime,
   layoutOptions,
   runLayout,
+  fitOrFocus,
   selectMovie,
+  findPath,
+  bfsPathFound,
+  lastBfsTime,
+  bfsPath,
   focusId,
   onFilteredMovies,
 });
