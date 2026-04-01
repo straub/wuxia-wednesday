@@ -127,6 +127,13 @@ export default [
       'curve-style': 'straight',
     },
   },
+  {
+    selector: 'edge.foreground',
+    style: {
+      width: 5,
+      'line-color': '#eee',
+    },
+  },
   // {
   //   selector: 'edge[billing]',
   //   style: {

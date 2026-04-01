@@ -87,6 +87,10 @@
       v-model:is-active="isFindingPath"
       @select="isFindingPath = false; cy.findPath($event)"
     />
+    <TheBfsPathModal
+      v-model:is-showing="isShowingBfsPath"
+      :path="bfsPath"
+    />
     <TheAboutModal v-model:is-showing="isShowingAbout" />
     <TheLogo
       v-model:is-glitching="isGlitching"
@@ -175,7 +179,8 @@
       indefinite
     >
       <template v-if="bfsPathFound">
-        Path found between movies!
+        Path found in {{ (lastBfsTime / 1000).toFixed(1) }}s!
+        <a href="#" @click.prevent="isShowingBfsPath = true">View Path</a>
       </template>
       <template v-else>
         No path found between the movies.
@@ -214,6 +219,9 @@ const allPeople = computed(() => cy.value?.allPeople ?? []);
 
 const loadingCount = computed(() => cy.value?.loadingCount);
 const bfsPathFound = computed(() => cy.value?.bfsPathFound);
+const lastBfsTime = computed(() => cy.value?.lastBfsTime ?? 0);
+const bfsPath = computed(() => cy.value?.bfsPath ?? []);
+const isShowingBfsPath = ref(false);
 
 const fitOrFocus = () => cy.value?.fitOrFocus();
 </script>

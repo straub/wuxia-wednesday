@@ -566,6 +566,8 @@ const selectMovie = async (movie) => {
 }
 
 const bfsPathFound = ref(false);
+const lastBfsTime = ref(0);
+const bfsPath = ref([]);
 
 const findPath = async (targetMovie) => {
   console.log('[findPath] called with targetMovie:', targetMovie);
@@ -584,8 +586,11 @@ const findPath = async (targetMovie) => {
 
   emit('update:isBfsComplete', false);
   bfsPathFound.value = false;
+  bfsPath.value = [];
   isBfsModeRunning.value = true;
   console.log('[findPath] isBfsModeRunning set to true, value reads back as:', isBfsModeRunning.value);
+
+  const bfsStartTime = Date.now();
 
   // Record the origin movie (first movie in the graph before we add the target).
   const originId = cy.$('.movie').first().id();
@@ -669,6 +674,26 @@ const findPath = async (targetMovie) => {
           cy.edges().addClass('background').removeClass('foreground');
           result.path.removeClass('background').addClass('foreground');
           bfsPathFound.value = true;
+
+          // Build an ordered list of path items for the path modal.
+          // aStar returns alternating nodes and edges: node, edge, node, edge, …
+          // We accumulate nodes and attach the preceding edge's billing as `via`.
+          const items = [];
+          let pendingVia = null;
+          result.path.forEach((ele) => {
+            if (ele.isEdge()) {
+              pendingVia = ele.data('billing');
+            } else {
+              items.push({
+                type: ele.hasClass('movie') ? 'movie' : 'person',
+                via: pendingVia,
+                ...ele.data(),
+              });
+              pendingVia = null;
+            }
+          });
+          bfsPath.value = items;
+
           console.log('[findPath] path found! length:', result.path.length);
           break;
         }
@@ -679,6 +704,7 @@ const findPath = async (targetMovie) => {
     console.log('[findPath] loop exited | bfsRunning:', bfsRunning, '| queue empty:', queue.length === 0, '| pathFound:', bfsPathFound.value);
   } finally {
     stopWatch();
+    lastBfsTime.value = Date.now() - bfsStartTime;
     isBfsModeRunning.value = false;
     emit('update:isBfsComplete', true);
     console.log('[findPath] finished, isBfsComplete emitted');
@@ -708,6 +734,8 @@ defineExpose({
   selectMovie,
   findPath,
   bfsPathFound,
+  lastBfsTime,
+  bfsPath,
   focusId,
   onFilteredMovies,
 });
