@@ -97,7 +97,7 @@ const saveState = () => {
   allMovies.value = cy.$('.movie').map(ele => ele.data());
   allPeople.value = cy.$('.person').map(ele => ele.data());
 
-  if (isAutoModeRunning.value) { return; }
+  if (isAutoModeRunning.value || isBfsModeRunning.value) { return; }
 
   const elements = cy.elements().jsons();
 
@@ -598,7 +598,7 @@ const findPath = async (targetMovie) => {
   if (!cy.hasElementWithId(targetId)) {
     cy.add([{
       group: 'nodes',
-      data: { ...targetMovie, id: targetId },
+      data: { ...JSON.parse(JSON.stringify(targetMovie)), id: targetId },
       classes: ['movie', 'foreground'],
       position: {
         x: originEle.position('x') + 800,
