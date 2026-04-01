@@ -575,7 +575,7 @@ const findPath = async (targetMovie) => {
 
   emit('update:isBfsComplete', false);
   bfsPathFound.value = false;
-  emit('update:isBfsModeRunning', true);
+  isBfsModeRunning.value = true;
 
   // Record the origin movie (first movie in the graph before we add the target).
   const originId = cy.$('.movie').first().id();
@@ -585,7 +585,7 @@ const findPath = async (targetMovie) => {
   if (!cy.hasElementWithId(targetId)) {
     cy.add([{
       group: 'nodes',
-      data: { id: targetId },
+      data: { ...targetMovie, id: targetId },
       classes: ['movie', 'foreground'],
       pannable: true,
     }]);
@@ -625,7 +625,7 @@ const findPath = async (targetMovie) => {
     }
   }
 
-  emit('update:isBfsModeRunning', false);
+  isBfsModeRunning.value = false;
   emit('update:isBfsComplete', true);
 };
 
