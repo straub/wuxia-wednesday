@@ -579,54 +579,78 @@ const findPath = async (targetMovie) => {
 
   // Record the origin movie (first movie in the graph before we add the target).
   const originId = cy.$('.movie').first().id();
+  const originEle = cy.$id(originId);
 
-  // Add target movie to graph if not already present.
+  // Add target movie to graph positioned to the right of the origin.
   const targetId = `movie:${targetMovie.id}`;
   if (!cy.hasElementWithId(targetId)) {
     cy.add([{
       group: 'nodes',
       data: { ...targetMovie, id: targetId },
       classes: ['movie', 'foreground'],
+      position: {
+        x: originEle.position('x') + 800,
+        y: originEle.position('y'),
+      },
       pannable: true,
     }]);
   }
+
+  const targetEle = cy.$id(targetId);
+
+  // Use a plain local variable as the loop guard so Vue reactivity timing
+  // can never cause the loop to exit prematurely. An external cancel
+  // (isBfsModeRunning set to false by the parent) is still respected via
+  // the watchEffect below.
+  let bfsRunning = true;
+  const stopWatch = watchEffect(() => {
+    if (!isBfsModeRunning.value) bfsRunning = false;
+  });
 
   // BFS queue: all nodes currently in the graph.
   const visited = new Set(cy.nodes().map(n => n.id()));
   const queue = [...visited];
 
-  while (queue.length > 0 && isBfsModeRunning.value) {
-    const id = queue.shift();
+  try {
+    while (queue.length > 0 && bfsRunning) {
+      const id = queue.shift();
 
-    await fetchAndExpandNode(id);
-
-    // Enqueue any newly discovered nodes.
-    cy.nodes().forEach((node) => {
-      const nodeId = node.id();
-      if (!visited.has(nodeId)) {
-        visited.add(nodeId);
-        queue.push(nodeId);
+      try {
+        await fetchAndExpandNode(id);
+      } catch (err) {
+        // A single failed API call (rate limit, network blip, etc.) should not
+        // abort the whole search — just skip this node and carry on.
+        console.warn(`findPath: failed to expand node ${id}:`, err);
+        continue;
       }
-    });
 
-    // Check whether a path now exists between origin and target.
-    const originEle = cy.$id(originId);
-    const targetEle = cy.$id(targetId);
-    if (originEle.length && targetEle.length) {
-      const result = cy.elements().aStar({ root: originEle, goal: targetEle });
-      if (result.found) {
-        // Highlight the path.
-        cy.nodes().addClass('background').removeClass('foreground');
-        cy.edges().addClass('background').removeClass('foreground');
-        result.path.removeClass('background').addClass('foreground');
-        bfsPathFound.value = true;
-        break;
+      // Enqueue any newly discovered nodes.
+      cy.nodes().forEach((node) => {
+        const nodeId = node.id();
+        if (!visited.has(nodeId)) {
+          visited.add(nodeId);
+          queue.push(nodeId);
+        }
+      });
+
+      // Check whether a path now exists between origin and target.
+      if (originEle.length && targetEle.length) {
+        const result = cy.elements().aStar({ root: originEle, goal: targetEle });
+        if (result.found) {
+          // Highlight the path.
+          cy.nodes().addClass('background').removeClass('foreground');
+          cy.edges().addClass('background').removeClass('foreground');
+          result.path.removeClass('background').addClass('foreground');
+          bfsPathFound.value = true;
+          break;
+        }
       }
     }
+  } finally {
+    stopWatch();
+    isBfsModeRunning.value = false;
+    emit('update:isBfsComplete', true);
   }
-
-  isBfsModeRunning.value = false;
-  emit('update:isBfsComplete', true);
 };
 
 const focusId = (id) => {
