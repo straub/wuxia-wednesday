@@ -1,6 +1,9 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "local>straub/renovate-config"
-  ]
+    "local>straub/renovate-config",
+    ":dependencyDashboard",
+    "schedule:weekly"
+  ],
+  "updateNotScheduled": false
 }
