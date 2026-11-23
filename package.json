@@ -17,7 +17,7 @@
     "@types/cytoscape-cxtmenu": "3.4.5",
     "@types/cytoscape-fcose": "2.2.5",
     "@types/stats.js": "0.17.4",
-    "@vite-pwa/nuxt": "^0.10.8",
+    "@vite-pwa/nuxt": "0.10.8",
     "cytoscape": "3.30.3",
     "cytoscape-cxtmenu": "3.5.0",
     "cytoscape-fcose": "2.2.0",
